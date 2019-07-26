@@ -6,7 +6,6 @@ use crate::proc_macro::TokenStream;
 use quote::ToTokens;
 use syn::{self, parse_macro_input, parse_quote, AttributeArgs, FnArg, ItemFn, Stmt};
 
-/// Custom attribute for tracable parser
 #[proc_macro_attribute]
 pub fn tracable_parser(attr: TokenStream, item: TokenStream) -> TokenStream {
     let attr = parse_macro_input!(attr as AttributeArgs);
