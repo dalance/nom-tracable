@@ -1,0 +1,44 @@
+trigger:
+    branches:
+        include:
+            - '*'
+    tags:
+        include:
+            - '*'
+
+jobs:
+    - job: Stable
+      pool:
+          vmImage: 'ubuntu-16.04'
+      steps:
+          - script: |
+              curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
+              echo '##vso[task.setvariable variable=PATH]$(PATH):$(HOME)/.cargo/bin'
+            displayName: Install rustup
+          - script: |
+              cargo test
+            displayName: Run test
+
+    - job: Beta
+      pool:
+          vmImage: 'ubuntu-16.04'
+      steps:
+          - script: |
+              curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain beta
+              echo '##vso[task.setvariable variable=PATH]$(PATH):$(HOME)/.cargo/bin'
+            displayName: Install rustup
+          - script: |
+              cargo test
+            displayName: Run test
+
+    - job: Nightly
+      pool:
+          vmImage: 'ubuntu-16.04'
+      steps:
+          - script: |
+              curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
+              echo '##vso[task.setvariable variable=PATH]$(PATH):$(HOME)/.cargo/bin'
+            displayName: Install rustup
+          - script: |
+              cargo test
+            displayName: Run test
