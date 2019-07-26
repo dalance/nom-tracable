@@ -44,6 +44,8 @@ The output of the example is below:
 
 ![nom-tracable](https://user-images.githubusercontent.com/4331004/61949595-5252ae80-afe6-11e9-93dc-d5c5fa3a2d0e.png)
 
+Succeeded parsers are green and failed parsers are red.
+
 ```rust
 use nom::branch::*;
 use nom::character::complete::*;
