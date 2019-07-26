@@ -34,6 +34,16 @@ If none of them is specified, there is no additional cost.
 
 ## Example
 
+You can try an example by the following command.
+
+```
+$ cargo run --manifest-path=nom-tracable/Cargo.toml --example example --features "forward_trace backward_trace"
+```
+
+The output of the example is below:
+
+![nom-tracable](https://user-images.githubusercontent.com/4331004/61949595-5252ae80-afe6-11e9-93dc-d5c5fa3a2d0e.png)
+
 ```rust
 use nom::branch::*;
 use nom::character::complete::*;
@@ -45,7 +55,7 @@ use nom_tracable::{tracable_parser, Tracable, TracableInfo};
 // nom_locate::LocatedSpanEx<T, TracableInfo> implements it.
 type Span<'a> = LocatedSpanEx<&'a str, TracableInfo>;
 
-// Apply recursive_parser by custom attribute
+// Apply tracable_parser by custom attribute
 #[tracable_parser]
 pub fn expr(s: Span) -> IResult<Span, String> {
     alt((expr_plus, expr_minus, term))(s)
@@ -76,7 +86,10 @@ pub fn term(s: Span) -> IResult<Span, String> {
 }
 
 fn main() {
-    let ret = expr(LocatedSpanEx::new_extra("1-1+1+1-1+1+1-1+1", TracableInfo::default()));
+    let ret = expr(LocatedSpanEx::new_extra(
+        "1-1+1+1-1+1+1-1+1",
+        TracableInfo::default(),
+    ));
     println!("{:?}", ret.unwrap().1);
 }
 ```
