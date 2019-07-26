@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "nom-tracable",
+    "nom-tracable-macros",
+]
