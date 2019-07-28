@@ -2,7 +2,7 @@ use nom::branch::*;
 use nom::character::complete::*;
 use nom::IResult;
 use nom_locate::LocatedSpanEx;
-use nom_tracable::{tracable_parser, Tracable, TracableInfo};
+use nom_tracable::{tracable_parser, TracableInfo};
 
 type Span<'a> = LocatedSpanEx<&'a str, TracableInfo>;
 
@@ -37,15 +37,21 @@ pub fn term(s: Span) -> IResult<Span, String> {
 
 #[test]
 fn test() {
-    let ret = expr(LocatedSpanEx::new_extra("1", TracableInfo::default()));
+    let ret = expr(LocatedSpanEx::new_extra(
+        "1",
+        TracableInfo::new().forward(true).backward(true),
+    ));
     assert_eq!("\"1\"", format!("{:?}", ret.unwrap().1));
 
-    let ret = expr(LocatedSpanEx::new_extra("1+1", TracableInfo::default()));
+    let ret = expr(LocatedSpanEx::new_extra(
+        "1+1",
+        TracableInfo::new().forward(true).backward(true),
+    ));
     assert_eq!("\"1+1\"", format!("{:?}", ret.unwrap().1));
 
     let ret = expr(LocatedSpanEx::new_extra(
         "1-1+1+1-1+1+1-1+1",
-        TracableInfo::default(),
+        TracableInfo::new().forward(true).backward(true),
     ));
     assert_eq!("\"1-1+1+1-1+1+1-1+1\"", format!("{:?}", ret.unwrap().1));
 }

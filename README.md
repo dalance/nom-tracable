@@ -14,7 +14,8 @@ The input type of nom parser must implement `Tracable` trait.
 Therefore `&str` and `&[u8]` can't be used.
 You can define a wrapper type of `&str` or `&[u8]` and implement `Tracable`.
 
-Alternatively you can use `nom_locate::LocatedSpanEx<T, TracableInfo>`.
+nom-tracable is integrated with [nom_locate](https://github.com/fflorent/nom_locate).
+You can use `nom_locate::LocatedSpanEx<T, TracableInfo>` as input type.
 This implements `Tracable` in this crate.
 
 ## Usage
@@ -24,20 +25,16 @@ This implements `Tracable` in this crate.
 nom-tracable = "0.1.1"
 ```
 
-nom-tracable provide two features.
-`forward_trace` dump parser name before execution of the parser.
-`backward_trace` dump parser name after execution of the parser.
-Both of them can be used simultaneously.
-
-These features are not default.
-If none of them is specified, there is no additional cost.
+nom-tracable provide `trace` feature.
+When `trace` is enabled, trace dump is enabled.
+If not, there is no additional cost.
 
 ## Example
 
 You can try an example by the following command.
 
 ```
-$ cargo run --manifest-path=nom-tracable/Cargo.toml --example example --features "forward_trace backward_trace"
+$ cargo run --manifest-path=nom-tracable/Cargo.toml --example example --features trace
 ```
 
 The output of the example is below:
@@ -51,7 +48,7 @@ use nom::branch::*;
 use nom::character::complete::*;
 use nom::IResult;
 use nom_locate::LocatedSpanEx;
-use nom_tracable::{tracable_parser, Tracable, TracableInfo};
+use nom_tracable::{tracable_parser, TracableInfo};
 
 // Input type must implement trait Tracable
 // nom_locate::LocatedSpanEx<T, TracableInfo> implements it.
@@ -88,10 +85,13 @@ pub fn term(s: Span) -> IResult<Span, String> {
 }
 
 fn main() {
-    let ret = expr(LocatedSpanEx::new_extra(
-        "1-1+1+1-1+1+1-1+1",
-        TracableInfo::default(),
-    ));
+    // Configure trace setting
+    let info = TracableInfo::new()
+        .forward(true)
+        .backward(true)
+        .count_width(5)
+        .parser_width(64);
+    let ret = expr(LocatedSpanEx::new_extra("1-1+1+1-1+1+1-1+1", info));
     println!("{:?}", ret.unwrap().1);
 }
 ```

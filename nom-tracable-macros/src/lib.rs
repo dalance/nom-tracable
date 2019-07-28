@@ -29,7 +29,7 @@ fn impl_tracable_parser(_attr: &AttributeArgs, item: &ItemFn) -> TokenStream {
 fn impl_tracable_parser_default(item: &ItemFn) -> Stmt {
     let body = item.block.as_ref();
     parse_quote! {
-        #[cfg(not(any(feature = "forward_trace", feature = "backward_trace")))]
+        #[cfg(not(feature = "trace"))]
         {
             #body
         }
@@ -51,39 +51,16 @@ fn impl_tracable_parser_trace(item: &ItemFn) -> Stmt {
     let body = item.block.as_ref();
 
     parse_quote! {
-        #[cfg(any(feature = "forward_trace", feature = "backward_trace"))]
+        #[cfg(feature = "trace")]
         {
-            let depth = #input.get_depth();
-            #[cfg(feature = "forward_trace")]
-            println!(
-                "{:<128} : {}",
-                format!("{}{}-> {}{}", "\u{001b}[1;37m", " ".repeat(depth), stringify!(#ident), "\u{001b}[0m"),
-                #input.format(),
-            );
-            let #input = #input.inc_depth();
+            let (depth, #input) = nom_tracable::forward_trace(#input, stringify!(#ident));
+
             let body_ret = {
                 let body = || { #body };
                 body()
             };
-            match body_ret {
-                Ok((s, x)) => {
-                    #[cfg(feature = "backward_trace")]
-                    println!(
-                        "{:<128} : {}",
-                        format!("{}{}<- {}{}", "\u{001b}[1;32m", " ".repeat(depth), stringify!(#ident), "\u{001b}[0m"),
-                        s.format(),
-                    );
-                    Ok((s.dec_depth(), x))
-                },
-                Err(x) => {
-                    #[cfg(feature = "backward_trace")]
-                    println!(
-                        "{:<128}",
-                        format!("{}{}<- {}{}", "\u{001b}[1;31m", " ".repeat(depth), stringify!(#ident), "\u{001b}[0m"),
-                    );
-                    Err(x)
-                },
-            }
+
+            nom_tracable::backward_trace(body_ret, stringify!(#ident), depth)
         }
     }
 }

@@ -2,7 +2,7 @@ use nom::branch::*;
 use nom::character::complete::*;
 use nom::IResult;
 use nom_locate::LocatedSpanEx;
-use nom_tracable::{tracable_parser, Tracable, TracableInfo};
+use nom_tracable::{tracable_parser, TracableInfo};
 
 // Input type must implement trait Tracable
 // nom_locate::LocatedSpanEx<T, TracableInfo> implements it.
@@ -39,9 +39,12 @@ pub fn term(s: Span) -> IResult<Span, String> {
 }
 
 fn main() {
-    let ret = expr(LocatedSpanEx::new_extra(
-        "1-1+1+1-1+1+1-1+1",
-        TracableInfo::default(),
-    ));
+    // Configure trace setting
+    let info = TracableInfo::new()
+        .forward(true)
+        .backward(true)
+        .count_width(5)
+        .parser_width(64);
+    let ret = expr(LocatedSpanEx::new_extra("1-1+1+1-1+1+1-1+1", info));
     println!("{:?}", ret.unwrap().1);
 }
