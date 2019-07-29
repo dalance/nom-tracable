@@ -16,13 +16,13 @@ trace   = []
 
 [dependencies]
 nom                 = "5.0.0"
-nom_locate          = {path = "../../nom_locate", version = "0.4.0"}
+nom_locate          = {git = "https://github.com/fflorent/nom_locate", version = "0.4.0"}
 nom-tracable-macros = {path = "../nom-tracable-macros", version = "0.1.0"}
 
 [package.metadata.release]
 pre-release-replacements = [
-    {file="../README.md", search="nom-tracable = \"[a-z0-9\\.-]+\"", replace="nom-tracable = \"{{version}}\""},
-    {file="../CHANGELOG.md", search="Unreleased", replace="v{{version}}"},
-    {file="../CHANGELOG.md", search="ReleaseDate", replace="{{date}}"},
-    {file="../CHANGELOG.md", search="Change Log", replace="Change Log\n\n## [Unreleased](https://github.com/dalance/nom-tracable/compare/v{{version}}...Unreleased) - ReleaseDate"},
+    {file = "../README.md", search = "nom-tracable = \"[a-z0-9\\.-]+\"", replace = "nom-tracable = \"{{version}}\""},
+    {file = "../CHANGELOG.md", search = "Unreleased", replace = "v{{version}}"},
+    {file = "../CHANGELOG.md", search = "ReleaseDate", replace = "{{date}}"},
+    {file = "../CHANGELOG.md", search = "Change Log", replace = "Change Log\n\n## [Unreleased](https://github.com/dalance/nom-tracable/compare/v{{version}}...Unreleased) - ReleaseDate"},
 ]

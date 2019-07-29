@@ -14,7 +14,7 @@ proc-macro = true
 
 [dependencies]
 quote = "0.6.9"
-syn   = { version = "0.15.18", features = ["full", "fold", "parsing", "extra-traits"] }
+syn   = {version = "0.15.18", features = ["full", "fold", "parsing", "extra-traits"]}
 
 [package.metadata.release]
 disable-tag = true
