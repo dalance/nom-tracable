@@ -22,7 +22,7 @@ This implements `Tracable` in this crate.
 
 ```Cargo.toml
 [dependencies]
-nom-tracable = "0.1.1"
+nom-tracable = "0.2.0"
 ```
 
 nom-tracable provide `trace` feature.
