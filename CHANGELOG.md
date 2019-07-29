@@ -1,6 +1,8 @@
 # Change Log
 
-## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.2.0...Unreleased) - ReleaseDate
+## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.2.1...Unreleased) - ReleaseDate
+
+## [v0.2.1](https://github.com/dalance/nom-tracable/compare/v0.2.0...v0.2.1) - 2019-07-29
 
 * [Added] custom_trace function
 
