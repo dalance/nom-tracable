@@ -368,3 +368,26 @@ pub fn backward_trace<T: Tracable, U>(
     #[cfg(not(feature = "trace"))]
     input
 }
+
+#[allow(unused_variables)]
+pub fn custom_trace<T: Tracable>(input: &T, name: &str, message: &str, color: &str) {
+    #[cfg(feature = "trace")]
+    {
+        let info = input.get_tracable_info();
+        let depth = info.depth;
+        let forward_backword = format!(
+            "{:<count_width$} {:<count_width$}",
+            "",
+            "",
+            count_width = info.count_width
+        );
+
+        println!(
+            "{} : {:<parser_width$} : {}",
+            forward_backword,
+            format!("{}{}   {}{}", color, " ".repeat(depth), name, "\u{001b}[0m"),
+            message,
+            parser_width = info.parser_width,
+        );
+    }
+}
