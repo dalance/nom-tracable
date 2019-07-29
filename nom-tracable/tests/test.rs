@@ -37,21 +37,15 @@ pub fn term(s: Span) -> IResult<Span, String> {
 
 #[test]
 fn test() {
-    let ret = expr(LocatedSpanEx::new_extra(
-        "1",
-        TracableInfo::new().forward(true).backward(true),
-    ));
+    let ret = expr(LocatedSpanEx::new_extra("1", TracableInfo::new()));
     assert_eq!("\"1\"", format!("{:?}", ret.unwrap().1));
 
-    let ret = expr(LocatedSpanEx::new_extra(
-        "1+1",
-        TracableInfo::new().forward(true).backward(true),
-    ));
+    let ret = expr(LocatedSpanEx::new_extra("1+1", TracableInfo::new()));
     assert_eq!("\"1+1\"", format!("{:?}", ret.unwrap().1));
 
     let ret = expr(LocatedSpanEx::new_extra(
         "1-1+1+1-1+1+1-1+1",
-        TracableInfo::new().forward(true).backward(true),
+        TracableInfo::new(),
     ));
     assert_eq!("\"1-1+1+1-1+1+1-1+1\"", format!("{:?}", ret.unwrap().1));
 }

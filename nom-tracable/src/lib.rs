@@ -64,6 +64,10 @@ impl TracableInfo {
     pub fn new() -> Self {
         TracableInfo {
             #[cfg(feature = "trace")]
+            forward: true,
+            #[cfg(feature = "trace")]
+            backward: true,
+            #[cfg(feature = "trace")]
             count_width: 10,
             #[cfg(feature = "trace")]
             parser_width: 96,
@@ -221,13 +225,31 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
             crate::TRACABLE_STORAGE.with(|storage| {
                 storage.borrow_mut().init_count();
             });
+            let forward_backword = if info.forward & info.backward {
+                format!(
+                    "{:<count_width$} {:<count_width$}",
+                    "forward",
+                    "backward",
+                    count_width = info.count_width
+                )
+            } else if info.forward {
+                format!(
+                    "{:<count_width$}",
+                    "forward",
+                    count_width = info.count_width
+                )
+            } else {
+                format!(
+                    "{:<count_width$}",
+                    "backward",
+                    count_width = info.count_width
+                )
+            };
             println!(
-                "\n{:<count_width$} {:<count_width$} : {:<parser_width$} : {}",
-                "forward",
-                "backward",
+                "\n{} : {:<parser_width$} : {}",
+                forward_backword,
                 "parser",
                 input.header(),
-                count_width = info.count_width,
                 parser_width = info.parser_width - 11, /* Control character width */
             );
         }
@@ -238,10 +260,24 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
                 storage.borrow().get_forward_count()
             });
 
+            let forward_backword = if info.backward {
+                format!(
+                    "{:<count_width$} {:<count_width$}",
+                    forward_count,
+                    "",
+                    count_width = info.count_width
+                )
+            } else {
+                format!(
+                    "{:<count_width$}",
+                    forward_count,
+                    count_width = info.count_width
+                )
+            };
+
             println!(
-                "{:<count_width$} {} : {:<parser_width$} : {}",
-                forward_count,
-                " ".repeat(info.count_width),
+                "{} : {:<parser_width$} : {}",
+                forward_backword,
                 format!(
                     "{}{}-> {}{}",
                     "\u{001b}[1;37m",
@@ -250,7 +286,6 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
                     "\u{001b}[0m"
                 ),
                 input.format(),
-                count_width = info.count_width,
                 parser_width = info.parser_width,
             );
         }
@@ -277,12 +312,27 @@ pub fn backward_trace<T: Tracable, U>(
                 storage.borrow_mut().inc_backward_count();
                 storage.borrow().get_backward_count()
             });
+
+            let forward_backword = if info.forward {
+                format!(
+                    "{:<count_width$} {:<count_width$}",
+                    "",
+                    backward_count,
+                    count_width = info.count_width
+                )
+            } else {
+                format!(
+                    "{:<count_width$}",
+                    backward_count,
+                    count_width = info.count_width
+                )
+            };
+
             match input {
                 Ok((s, x)) => {
                     println!(
-                        "{} {:<count_width$} : {:<parser_width$} : {}",
-                        " ".repeat(info.count_width),
-                        backward_count,
+                        "{} : {:<parser_width$} : {}",
+                        forward_backword,
                         format!(
                             "{}{}<- {}{}",
                             "\u{001b}[1;32m",
@@ -291,16 +341,14 @@ pub fn backward_trace<T: Tracable, U>(
                             "\u{001b}[0m"
                         ),
                         s.format(),
-                        count_width = info.count_width,
                         parser_width = info.parser_width,
                     );
                     Ok((s.dec_depth(), x))
                 }
                 Err(x) => {
                     println!(
-                        "{} {:<count_width$} : {:<parser_width$}",
-                        " ".repeat(info.count_width),
-                        backward_count,
+                        "{} : {:<parser_width$}",
+                        forward_backword,
                         format!(
                             "{}{}<- {}{}",
                             "\u{001b}[1;31m",
@@ -308,7 +356,6 @@ pub fn backward_trace<T: Tracable, U>(
                             name,
                             "\u{001b}[0m"
                         ),
-                        count_width = info.count_width,
                         parser_width = info.parser_width,
                     );
                     Err(x)

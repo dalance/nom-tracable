@@ -40,11 +40,11 @@ pub fn term(s: Span) -> IResult<Span, String> {
 
 fn main() {
     // Configure trace setting
-    let info = TracableInfo::new()
-        .forward(true)
-        .backward(true)
-        .count_width(5)
-        .parser_width(64);
+    let info = TracableInfo::new().parser_width(64);
+    let ret = expr(LocatedSpanEx::new_extra("1-1+1+1-1+1+1-1+1", info));
+    println!("{:?}", ret.unwrap().1);
+
+    let info = TracableInfo::new().backward(false).parser_width(64);
     let ret = expr(LocatedSpanEx::new_extra("1-1+1+1-1+1+1-1+1", info));
     println!("{:?}", ret.unwrap().1);
 }
