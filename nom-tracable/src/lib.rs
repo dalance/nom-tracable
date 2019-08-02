@@ -46,7 +46,7 @@ pub trait HasTracableInfo {
     fn set_tracable_info(self, info: TracableInfo) -> Self;
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct TracableInfo {
     #[cfg(feature = "trace")]
     depth: usize,
@@ -55,24 +55,35 @@ pub struct TracableInfo {
     #[cfg(feature = "trace")]
     backward: bool,
     #[cfg(feature = "trace")]
+    custom: bool,
+    #[cfg(feature = "trace")]
     count_width: usize,
     #[cfg(feature = "trace")]
     parser_width: usize,
 }
 
-impl TracableInfo {
-    pub fn new() -> Self {
+impl Default for TracableInfo {
+    fn default() -> Self {
         TracableInfo {
+            #[cfg(feature = "trace")]
+            depth: 0,
             #[cfg(feature = "trace")]
             forward: true,
             #[cfg(feature = "trace")]
             backward: true,
             #[cfg(feature = "trace")]
+            custom: true,
+            #[cfg(feature = "trace")]
             count_width: 10,
             #[cfg(feature = "trace")]
             parser_width: 96,
-            ..Default::default()
         }
+    }
+}
+
+impl TracableInfo {
+    pub fn new() -> Self {
+        TracableInfo::default()
     }
 
     #[cfg(feature = "trace")]
@@ -374,20 +385,23 @@ pub fn custom_trace<T: Tracable>(input: &T, name: &str, message: &str, color: &s
     #[cfg(feature = "trace")]
     {
         let info = input.get_tracable_info();
-        let depth = info.depth;
-        let forward_backword = format!(
-            "{:<count_width$} {:<count_width$}",
-            "",
-            "",
-            count_width = info.count_width
-        );
 
-        println!(
-            "{} : {:<parser_width$} : {}",
-            forward_backword,
-            format!("{}{}   {}{}", color, " ".repeat(depth), name, "\u{001b}[0m"),
-            message,
-            parser_width = info.parser_width,
-        );
+        if info.custom {
+            let depth = info.depth;
+            let forward_backword = format!(
+                "{:<count_width$} {:<count_width$}",
+                "",
+                "",
+                count_width = info.count_width
+            );
+
+            println!(
+                "{} : {:<parser_width$} : {}",
+                forward_backword,
+                format!("{}{}   {}{}", color, " ".repeat(depth), name, "\u{001b}[0m"),
+                message,
+                parser_width = info.parser_width,
+            );
+        }
     }
 }
