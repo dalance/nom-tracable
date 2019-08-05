@@ -31,6 +31,11 @@ pub fn expr_minus(s: Span) -> IResult<Span, String> {
 
 #[tracable_parser]
 pub fn term(s: Span) -> IResult<Span, String> {
+    term_inner(s)
+}
+
+#[tracable_parser]
+pub fn term_inner(s: Span) -> IResult<Span, String> {
     let (s, x) = char('1')(s)?;
     Ok((s, x.to_string()))
 }
@@ -46,6 +51,12 @@ fn test() {
     let ret = expr(LocatedSpanEx::new_extra(
         "1-1+1+1-1+1+1-1+1",
         TracableInfo::new(),
+    ));
+    assert_eq!("\"1-1+1+1-1+1+1-1+1\"", format!("{:?}", ret.unwrap().1));
+
+    let ret = expr(LocatedSpanEx::new_extra(
+        "1-1+1+1-1+1+1-1+1",
+        TracableInfo::new().fold("term"),
     ));
     assert_eq!("\"1-1+1+1-1+1+1-1+1\"", format!("{:?}", ret.unwrap().1));
 }

@@ -33,6 +33,7 @@
 
 use nom::IResult;
 pub use nom_tracable_macros::tracable_parser;
+use std::collections::HashMap;
 
 pub trait Tracable: HasTracableInfo {
     fn inc_depth(self) -> Self;
@@ -60,6 +61,8 @@ pub struct TracableInfo {
     count_width: usize,
     #[cfg(feature = "trace")]
     parser_width: usize,
+    #[cfg(feature = "trace")]
+    fold: u64,
 }
 
 impl Default for TracableInfo {
@@ -77,6 +80,8 @@ impl Default for TracableInfo {
             count_width: 10,
             #[cfg(feature = "trace")]
             parser_width: 96,
+            #[cfg(feature = "trace")]
+            fold: 0,
         }
     }
 }
@@ -120,6 +125,17 @@ impl TracableInfo {
     }
 
     #[cfg(feature = "trace")]
+    pub fn custom(mut self, x: bool) -> Self {
+        self.custom = x;
+        self
+    }
+
+    #[cfg(not(feature = "trace"))]
+    pub fn custom(self, _x: bool) -> Self {
+        self
+    }
+
+    #[cfg(feature = "trace")]
     pub fn count_width(mut self, x: usize) -> Self {
         self.count_width = x;
         self
@@ -139,6 +155,36 @@ impl TracableInfo {
     #[cfg(not(feature = "trace"))]
     pub fn parser_width(self, _x: usize) -> Self {
         self
+    }
+
+    #[cfg(feature = "trace")]
+    pub fn fold(mut self, x: &str) -> Self {
+        let index =
+            crate::TRACABLE_STORAGE.with(|storage| storage.borrow_mut().get_parser_index(x));
+
+        let val = 1u64 << index;
+        let mask = !(1u64 << index);
+
+        self.fold = (self.fold & mask) | val;
+        self
+    }
+
+    #[cfg(not(feature = "trace"))]
+    pub fn fold(self, _x: &str) -> Self {
+        self
+    }
+
+    #[cfg(feature = "trace")]
+    pub fn folded(self, x: &str) -> bool {
+        let index =
+            crate::TRACABLE_STORAGE.with(|storage| storage.borrow_mut().get_parser_index(x));
+
+        ((self.fold >> index) & 1u64) == 1u64
+    }
+
+    #[cfg(not(feature = "trace"))]
+    pub fn folded(self, _x: &str) -> bool {
+        false
     }
 }
 
@@ -191,6 +237,8 @@ impl<T: std::fmt::Display, U: HasTracableInfo> Tracable for nom_locate::LocatedS
 pub struct TracableStorage {
     forward_count: usize,
     backward_count: usize,
+    parser_indexes: HashMap<String, usize>,
+    parser_index_next: usize,
 }
 
 impl TracableStorage {
@@ -217,6 +265,18 @@ impl TracableStorage {
 
     pub fn inc_backward_count(&mut self) {
         self.backward_count += 1
+    }
+
+    pub fn get_parser_index(&mut self, key: &str) -> usize {
+        if let Some(x) = self.parser_indexes.get(key) {
+            *x
+        } else {
+            let new_index = self.parser_index_next;
+            assert!(new_index < 64);
+            self.parser_index_next += 1;
+            self.parser_indexes.insert(String::from(key), new_index);
+            new_index
+        }
     }
 }
 
@@ -301,6 +361,13 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
             );
         }
 
+        let input = if info.folded(name) {
+            let info = info.forward(false).backward(false).custom(false);
+            input.set_tracable_info(info)
+        } else {
+            input
+        };
+
         let input = input.inc_depth();
         (info, input)
     }
@@ -354,6 +421,18 @@ pub fn backward_trace<T: Tracable, U>(
                         s.format(),
                         parser_width = info.parser_width,
                     );
+
+                    let s = if info.folded(name) {
+                        let info = s
+                            .get_tracable_info()
+                            .forward(info.forward)
+                            .backward(info.backward)
+                            .custom(info.custom);
+                        s.set_tracable_info(info)
+                    } else {
+                        s
+                    };
+
                     Ok((s.dec_depth(), x))
                 }
                 Err(x) => {
