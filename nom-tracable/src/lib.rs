@@ -31,6 +31,7 @@
 //! }
 //! ```
 
+#[cfg(feature = "trace")]
 use nom::IResult;
 pub use nom_tracable_macros::tracable_parser;
 use std::collections::HashMap;
@@ -86,78 +87,42 @@ impl Default for TracableInfo {
     }
 }
 
+#[cfg(feature = "trace")]
 impl TracableInfo {
     pub fn new() -> Self {
         TracableInfo::default()
     }
 
-    #[cfg(feature = "trace")]
     pub fn depth(mut self, x: usize) -> Self {
         self.depth = x;
         self
     }
 
-    #[cfg(not(feature = "trace"))]
-    pub fn depth(self, _x: usize) -> Self {
-        self
-    }
-
-    #[cfg(feature = "trace")]
     pub fn forward(mut self, x: bool) -> Self {
         self.forward = x;
         self
     }
 
-    #[cfg(not(feature = "trace"))]
-    pub fn forward(self, _x: bool) -> Self {
-        self
-    }
-
-    #[cfg(feature = "trace")]
     pub fn backward(mut self, x: bool) -> Self {
         self.backward = x;
         self
     }
 
-    #[cfg(not(feature = "trace"))]
-    pub fn backward(self, _x: bool) -> Self {
-        self
-    }
-
-    #[cfg(feature = "trace")]
     pub fn custom(mut self, x: bool) -> Self {
         self.custom = x;
         self
     }
 
-    #[cfg(not(feature = "trace"))]
-    pub fn custom(self, _x: bool) -> Self {
-        self
-    }
-
-    #[cfg(feature = "trace")]
     pub fn count_width(mut self, x: usize) -> Self {
         self.count_width = x;
         self
     }
 
-    #[cfg(not(feature = "trace"))]
-    pub fn count_width(self, _x: usize) -> Self {
-        self
-    }
-
-    #[cfg(feature = "trace")]
     pub fn parser_width(mut self, x: usize) -> Self {
         self.parser_width = x;
         self
     }
 
-    #[cfg(not(feature = "trace"))]
-    pub fn parser_width(self, _x: usize) -> Self {
-        self
-    }
-
-    #[cfg(feature = "trace")]
     pub fn fold(mut self, x: &str) -> Self {
         let index =
             crate::TRACABLE_STORAGE.with(|storage| storage.borrow_mut().get_parser_index(x));
@@ -169,20 +134,56 @@ impl TracableInfo {
         self
     }
 
-    #[cfg(not(feature = "trace"))]
-    pub fn fold(self, _x: &str) -> Self {
-        self
+    pub fn enabled(self) -> bool {
+        self.forward | self.backward | self.custom
     }
 
-    #[cfg(feature = "trace")]
     pub fn folded(self, x: &str) -> bool {
         let index =
             crate::TRACABLE_STORAGE.with(|storage| storage.borrow_mut().get_parser_index(x));
 
-        ((self.fold >> index) & 1u64) == 1u64
+        if index < 64 {
+            ((self.fold >> index) & 1u64) == 1u64
+        } else {
+            false
+        }
+    }
+}
+
+#[cfg(not(feature = "trace"))]
+impl TracableInfo {
+    pub fn new() -> Self {
+        TracableInfo::default()
     }
 
-    #[cfg(not(feature = "trace"))]
+    pub fn depth(self, _x: usize) -> Self {
+        self
+    }
+
+    pub fn forward(self, _x: bool) -> Self {
+        self
+    }
+
+    pub fn backward(self, _x: bool) -> Self {
+        self
+    }
+
+    pub fn custom(self, _x: bool) -> Self {
+        self
+    }
+
+    pub fn count_width(self, _x: usize) -> Self {
+        self
+    }
+
+    pub fn parser_width(self, _x: usize) -> Self {
+        self
+    }
+
+    pub fn fold(self, _x: &str) -> Self {
+        self
+    }
+
     pub fn folded(self, _x: &str) -> bool {
         false
     }
@@ -246,7 +247,7 @@ impl TracableStorage {
         TracableStorage::default()
     }
 
-    pub fn init_count(&mut self) {
+    pub fn init(&mut self) {
         self.forward_count = 0;
         self.backward_count = 0;
     }
@@ -272,7 +273,6 @@ impl TracableStorage {
             *x
         } else {
             let new_index = self.parser_index_next;
-            assert!(new_index < 64);
             self.parser_index_next += 1;
             self.parser_indexes.insert(String::from(key), new_index);
             new_index
@@ -286,201 +286,189 @@ thread_local!(
     }
 );
 
-#[allow(unused_variables)]
+#[cfg(feature = "trace")]
 pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
-    #[cfg(feature = "trace")]
-    {
-        let info = input.get_tracable_info();
-        let depth = info.depth;
-        if (depth == 0) & (info.forward | info.backward) {
-            crate::TRACABLE_STORAGE.with(|storage| {
-                storage.borrow_mut().init_count();
-            });
-            let forward_backword = if info.forward & info.backward {
-                format!(
-                    "{:<count_width$} {:<count_width$}",
-                    "forward",
-                    "backward",
-                    count_width = info.count_width
-                )
-            } else if info.forward {
-                format!(
-                    "{:<count_width$}",
-                    "forward",
-                    count_width = info.count_width
-                )
-            } else {
-                format!(
-                    "{:<count_width$}",
-                    "backward",
-                    count_width = info.count_width
-                )
-            };
-            println!(
-                "\n{} : {:<parser_width$} : {}",
-                forward_backword,
-                "parser",
-                input.header(),
-                parser_width = info.parser_width - 11, /* Control character width */
-            );
-        }
+    let info = input.get_tracable_info();
+    let depth = info.depth;
 
-        if info.forward {
-            let forward_count = crate::TRACABLE_STORAGE.with(|storage| {
-                storage.borrow_mut().inc_forward_count();
-                storage.borrow().get_forward_count()
-            });
-
-            let forward_backword = if info.backward {
-                format!(
-                    "{:<count_width$} {:<count_width$}",
-                    forward_count,
-                    "",
-                    count_width = info.count_width
-                )
-            } else {
-                format!(
-                    "{:<count_width$}",
-                    forward_count,
-                    count_width = info.count_width
-                )
-            };
-
-            println!(
-                "{} : {:<parser_width$} : {}",
-                forward_backword,
-                format!(
-                    "{}{}-> {}{}",
-                    "\u{001b}[1;37m",
-                    " ".repeat(depth),
-                    name,
-                    "\u{001b}[0m"
-                ),
-                input.format(),
-                parser_width = info.parser_width,
-            );
-        }
-
-        let input = if info.folded(name) {
-            let info = info.forward(false).backward(false).custom(false);
-            input.set_tracable_info(info)
+    if depth == 0 {
+        crate::TRACABLE_STORAGE.with(|storage| {
+            storage.borrow_mut().init();
+        });
+        let forward_backword = if info.forward & info.backward {
+            format!(
+                "{:<count_width$} {:<count_width$}",
+                "forward",
+                "backward",
+                count_width = info.count_width
+            )
+        } else if info.forward {
+            format!(
+                "{:<count_width$}",
+                "forward",
+                count_width = info.count_width
+            )
         } else {
-            input
+            format!(
+                "{:<count_width$}",
+                "backward",
+                count_width = info.count_width
+            )
+        };
+        println!(
+            "\n{} : {:<parser_width$} : {}",
+            forward_backword,
+            "parser",
+            input.header(),
+            parser_width = info.parser_width - 11, /* Control character width */
+        );
+    }
+
+    if info.forward {
+        let forward_count = crate::TRACABLE_STORAGE.with(|storage| {
+            storage.borrow_mut().inc_forward_count();
+            storage.borrow().get_forward_count()
+        });
+
+        let forward_backword = if info.backward {
+            format!(
+                "{:<count_width$} {:<count_width$}",
+                forward_count,
+                "",
+                count_width = info.count_width
+            )
+        } else {
+            format!(
+                "{:<count_width$}",
+                forward_count,
+                count_width = info.count_width
+            )
         };
 
-        let input = input.inc_depth();
-        (info, input)
+        println!(
+            "{} : {:<parser_width$} : {}",
+            forward_backword,
+            format!(
+                "{}{}-> {}{}",
+                "\u{001b}[1;37m",
+                " ".repeat(depth),
+                name,
+                "\u{001b}[0m"
+            ),
+            input.format(),
+            parser_width = info.parser_width,
+        );
     }
-    #[cfg(not(feature = "trace"))]
-    (TracableInfo::default(), input)
+
+    let input = if info.folded(name) {
+        let info = info.forward(false).backward(false).custom(false);
+        input.set_tracable_info(info)
+    } else {
+        input
+    };
+
+    let input = input.inc_depth();
+    (info, input)
 }
 
-#[allow(unused_variables)]
+#[cfg(feature = "trace")]
 pub fn backward_trace<T: Tracable, U>(
     input: IResult<T, U>,
     name: &str,
     info: TracableInfo,
 ) -> IResult<T, U> {
-    #[cfg(feature = "trace")]
-    {
-        let depth = info.depth;
+    let depth = info.depth;
 
-        if info.backward {
-            let backward_count = crate::TRACABLE_STORAGE.with(|storage| {
-                storage.borrow_mut().inc_backward_count();
-                storage.borrow().get_backward_count()
-            });
+    if info.backward {
+        let backward_count = crate::TRACABLE_STORAGE.with(|storage| {
+            storage.borrow_mut().inc_backward_count();
+            storage.borrow().get_backward_count()
+        });
 
-            let forward_backword = if info.forward {
-                format!(
-                    "{:<count_width$} {:<count_width$}",
-                    "",
-                    backward_count,
-                    count_width = info.count_width
-                )
-            } else {
-                format!(
-                    "{:<count_width$}",
-                    backward_count,
-                    count_width = info.count_width
-                )
-            };
-
-            match input {
-                Ok((s, x)) => {
-                    println!(
-                        "{} : {:<parser_width$} : {}",
-                        forward_backword,
-                        format!(
-                            "{}{}<- {}{}",
-                            "\u{001b}[1;32m",
-                            " ".repeat(depth),
-                            name,
-                            "\u{001b}[0m"
-                        ),
-                        s.format(),
-                        parser_width = info.parser_width,
-                    );
-
-                    let s = if info.folded(name) {
-                        let info = s
-                            .get_tracable_info()
-                            .forward(info.forward)
-                            .backward(info.backward)
-                            .custom(info.custom);
-                        s.set_tracable_info(info)
-                    } else {
-                        s
-                    };
-
-                    Ok((s.dec_depth(), x))
-                }
-                Err(x) => {
-                    println!(
-                        "{} : {:<parser_width$}",
-                        forward_backword,
-                        format!(
-                            "{}{}<- {}{}",
-                            "\u{001b}[1;31m",
-                            " ".repeat(depth),
-                            name,
-                            "\u{001b}[0m"
-                        ),
-                        parser_width = info.parser_width,
-                    );
-                    Err(x)
-                }
-            }
-        } else {
-            input
-        }
-    }
-    #[cfg(not(feature = "trace"))]
-    input
-}
-
-#[allow(unused_variables)]
-pub fn custom_trace<T: Tracable>(input: &T, name: &str, message: &str, color: &str) {
-    #[cfg(feature = "trace")]
-    {
-        let info = input.get_tracable_info();
-
-        if info.custom {
-            let depth = info.depth;
-            let forward_backword = format!(
+        let forward_backword = if info.forward {
+            format!(
                 "{:<count_width$} {:<count_width$}",
                 "",
-                "",
+                backward_count,
                 count_width = info.count_width
-            );
+            )
+        } else {
+            format!(
+                "{:<count_width$}",
+                backward_count,
+                count_width = info.count_width
+            )
+        };
 
-            println!(
-                "{} : {:<parser_width$} : {}",
-                forward_backword,
-                format!("{}{}   {}{}", color, " ".repeat(depth), name, "\u{001b}[0m"),
-                message,
-                parser_width = info.parser_width,
-            );
+        match input {
+            Ok((s, x)) => {
+                println!(
+                    "{} : {:<parser_width$} : {}",
+                    forward_backword,
+                    format!(
+                        "{}{}<- {}{}",
+                        "\u{001b}[1;32m",
+                        " ".repeat(depth),
+                        name,
+                        "\u{001b}[0m"
+                    ),
+                    s.format(),
+                    parser_width = info.parser_width,
+                );
+
+                let s = if info.folded(name) {
+                    let info = s
+                        .get_tracable_info()
+                        .forward(info.forward)
+                        .backward(info.backward)
+                        .custom(info.custom);
+                    s.set_tracable_info(info)
+                } else {
+                    s
+                };
+
+                Ok((s.dec_depth(), x))
+            }
+            Err(x) => {
+                println!(
+                    "{} : {:<parser_width$}",
+                    forward_backword,
+                    format!(
+                        "{}{}<- {}{}",
+                        "\u{001b}[1;31m",
+                        " ".repeat(depth),
+                        name,
+                        "\u{001b}[0m"
+                    ),
+                    parser_width = info.parser_width,
+                );
+                Err(x)
+            }
         }
+    } else {
+        input
+    }
+}
+
+#[cfg(feature = "trace")]
+pub fn custom_trace<T: Tracable>(input: &T, name: &str, message: &str, color: &str) {
+    let info = input.get_tracable_info();
+
+    if info.custom {
+        let depth = info.depth;
+        let forward_backword = format!(
+            "{:<count_width$} {:<count_width$}",
+            "",
+            "",
+            count_width = info.count_width
+        );
+
+        println!(
+            "{} : {:<parser_width$} : {}",
+            forward_backword,
+            format!("{}{}   {}{}", color, " ".repeat(depth), name, "\u{001b}[0m"),
+            message,
+            parser_width = info.parser_width,
+        );
     }
 }
