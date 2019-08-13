@@ -43,11 +43,13 @@ pub trait Tracable: HasTracableInfo {
     fn header(&self) -> String;
 }
 
+/// Trait to indicate `TracableInfo` is provided.
 pub trait HasTracableInfo {
     fn get_tracable_info(&self) -> TracableInfo;
     fn set_tracable_info(self, info: TracableInfo) -> Self;
 }
 
+/// Struct to have trace configuration.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct TracableInfo {
     #[cfg(feature = "trace")]
@@ -97,41 +99,48 @@ impl TracableInfo {
         TracableInfo::default()
     }
 
-    pub fn depth(mut self, x: usize) -> Self {
+    fn depth(mut self, x: usize) -> Self {
         self.depth = x;
         self
     }
 
+    /// Set whether forward trace is displayed.
     pub fn forward(mut self, x: bool) -> Self {
         self.forward = x;
         self
     }
 
+    /// Set whether backward trace is displayed.
     pub fn backward(mut self, x: bool) -> Self {
         self.backward = x;
         self
     }
 
+    /// Set whether custom trace is displayed.
     pub fn custom(mut self, x: bool) -> Self {
         self.custom = x;
         self
     }
 
+    /// Set whether color is enabled.
     pub fn color(mut self, x: bool) -> Self {
         self.color = x;
         self
     }
 
+    /// Set the width of forward/backward count.
     pub fn count_width(mut self, x: usize) -> Self {
         self.count_width = x;
         self
     }
 
+    /// Set the width of parser name.
     pub fn parser_width(mut self, x: usize) -> Self {
         self.parser_width = x;
         self
     }
 
+    /// Set the name of folding parser.
     pub fn fold(mut self, x: &str) -> Self {
         let index =
             crate::TRACABLE_STORAGE.with(|storage| storage.borrow_mut().get_parser_index(x));
@@ -143,11 +152,7 @@ impl TracableInfo {
         self
     }
 
-    pub fn enabled(self) -> bool {
-        self.forward | self.backward | self.custom
-    }
-
-    pub fn folded(self, x: &str) -> bool {
+    fn folded(self, x: &str) -> bool {
         let index =
             crate::TRACABLE_STORAGE.with(|storage| storage.borrow_mut().get_parser_index(x));
 
@@ -163,10 +168,6 @@ impl TracableInfo {
 impl TracableInfo {
     pub fn new() -> Self {
         TracableInfo::default()
-    }
-
-    pub fn depth(self, _x: usize) -> Self {
-        self
     }
 
     pub fn forward(self, _x: bool) -> Self {
@@ -195,10 +196,6 @@ impl TracableInfo {
 
     pub fn fold(self, _x: &str) -> Self {
         self
-    }
-
-    pub fn folded(self, _x: &str) -> bool {
-        false
     }
 }
 
@@ -248,40 +245,41 @@ impl<T: std::fmt::Display, U: HasTracableInfo> Tracable for nom_locate::LocatedS
 }
 
 #[derive(Debug, Default)]
-pub struct TracableStorage {
+struct TracableStorage {
     forward_count: usize,
     backward_count: usize,
     parser_indexes: HashMap<String, usize>,
     parser_index_next: usize,
 }
 
+#[allow(dead_code)]
 impl TracableStorage {
     fn new() -> Self {
         TracableStorage::default()
     }
 
-    pub fn init(&mut self) {
+    fn init(&mut self) {
         self.forward_count = 0;
         self.backward_count = 0;
     }
 
-    pub fn get_forward_count(&self) -> usize {
+    fn get_forward_count(&self) -> usize {
         self.forward_count
     }
 
-    pub fn get_backward_count(&self) -> usize {
+    fn get_backward_count(&self) -> usize {
         self.backward_count
     }
 
-    pub fn inc_forward_count(&mut self) {
+    fn inc_forward_count(&mut self) {
         self.forward_count += 1
     }
 
-    pub fn inc_backward_count(&mut self) {
+    fn inc_backward_count(&mut self) {
         self.backward_count += 1
     }
 
-    pub fn get_parser_index(&mut self, key: &str) -> usize {
+    fn get_parser_index(&mut self, key: &str) -> usize {
         if let Some(x) = self.parser_indexes.get(key) {
             *x
         } else {
@@ -294,11 +292,13 @@ impl TracableStorage {
 }
 
 thread_local!(
-    pub static TRACABLE_STORAGE: core::cell::RefCell<crate::TracableStorage> = {
+    static TRACABLE_STORAGE: core::cell::RefCell<crate::TracableStorage> = {
         core::cell::RefCell::new(crate::TracableStorage::new())
     }
 );
 
+/// Function to display forward trace.
+/// This is inserted by `#[tracable_parser]`.
 #[cfg(feature = "trace")]
 pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
     let info = input.get_tracable_info();
@@ -392,6 +392,8 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
     (info, input)
 }
 
+/// Function to display backward trace.
+/// This is inserted by `#[tracable_parser]`.
 #[cfg(feature = "trace")]
 pub fn backward_trace<T: Tracable, U>(
     input: IResult<T, U>,
@@ -478,6 +480,7 @@ pub fn backward_trace<T: Tracable, U>(
     }
 }
 
+/// Function to display custom trace.
 #[cfg(feature = "trace")]
 pub fn custom_trace<T: Tracable>(input: &T, name: &str, message: &str, color: &str) {
     let info = input.get_tracable_info();
