@@ -59,4 +59,10 @@ fn test() {
         TracableInfo::new().fold("term"),
     ));
     assert_eq!("\"1-1+1+1-1+1+1-1+1\"", format!("{:?}", ret.unwrap().1));
+
+    let ret = expr(LocatedSpanEx::new_extra(
+        "1-1+1+1-1+1+1-1+1",
+        TracableInfo::new().fold("term").color(false),
+    ));
+    assert_eq!("\"1-1+1+1-1+1+1-1+1\"", format!("{:?}", ret.unwrap().1));
 }

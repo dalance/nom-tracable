@@ -59,6 +59,8 @@ pub struct TracableInfo {
     #[cfg(feature = "trace")]
     custom: bool,
     #[cfg(feature = "trace")]
+    color: bool,
+    #[cfg(feature = "trace")]
     count_width: usize,
     #[cfg(feature = "trace")]
     parser_width: usize,
@@ -77,6 +79,8 @@ impl Default for TracableInfo {
             backward: true,
             #[cfg(feature = "trace")]
             custom: true,
+            #[cfg(feature = "trace")]
+            color: true,
             #[cfg(feature = "trace")]
             count_width: 10,
             #[cfg(feature = "trace")]
@@ -110,6 +114,11 @@ impl TracableInfo {
 
     pub fn custom(mut self, x: bool) -> Self {
         self.custom = x;
+        self
+    }
+
+    pub fn color(mut self, x: bool) -> Self {
+        self.color = x;
         self
     }
 
@@ -169,6 +178,10 @@ impl TracableInfo {
     }
 
     pub fn custom(self, _x: bool) -> Self {
+        self
+    }
+
+    pub fn color(self, _x: bool) -> Self {
         self
     }
 
@@ -315,12 +328,15 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
                 count_width = info.count_width
             )
         };
+
+        let control_witdh = if info.color { 11 } else { 0 };
+
         println!(
             "\n{} : {:<parser_width$} : {}",
             forward_backword,
             "parser",
             input.header(),
-            parser_width = info.parser_width - 11, /* Control character width */
+            parser_width = info.parser_width - control_witdh,
         );
     }
 
@@ -345,15 +361,20 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
             )
         };
 
+        let color = if info.color { "\u{001b}[1;37m" } else { "" };
+        let reset = if info.color { "\u{001b}[0m" } else { "" };
+        let folded = if info.folded(name) { "+" } else { " " };
+
         println!(
             "{} : {:<parser_width$} : {}",
             forward_backword,
             format!(
-                "{}{}-> {}{}",
-                "\u{001b}[1;37m",
+                "{}{}-> {} {}{}",
+                color,
                 " ".repeat(depth),
                 name,
-                "\u{001b}[0m"
+                folded,
+                reset
             ),
             input.format(),
             parser_width = info.parser_width,
@@ -400,17 +421,23 @@ pub fn backward_trace<T: Tracable, U>(
             )
         };
 
+        let color_ok = if info.color { "\u{001b}[1;32m" } else { "" };
+        let color_err = if info.color { "\u{001b}[1;31m" } else { "" };
+        let reset = if info.color { "\u{001b}[0m" } else { "" };
+        let folded = if info.folded(name) { "+" } else { " " };
+
         match input {
             Ok((s, x)) => {
                 println!(
                     "{} : {:<parser_width$} : {}",
                     forward_backword,
                     format!(
-                        "{}{}<- {}{}",
-                        "\u{001b}[1;32m",
+                        "{}{}<- {} {}{}",
+                        color_ok,
                         " ".repeat(depth),
                         name,
-                        "\u{001b}[0m"
+                        folded,
+                        reset
                     ),
                     s.format(),
                     parser_width = info.parser_width,
@@ -434,11 +461,12 @@ pub fn backward_trace<T: Tracable, U>(
                     "{} : {:<parser_width$}",
                     forward_backword,
                     format!(
-                        "{}{}<- {}{}",
-                        "\u{001b}[1;31m",
+                        "{}{}<- {} {}{}",
+                        color_err,
                         " ".repeat(depth),
                         name,
-                        "\u{001b}[0m"
+                        folded,
+                        reset
                     ),
                     parser_width = info.parser_width,
                 );
@@ -463,10 +491,13 @@ pub fn custom_trace<T: Tracable>(input: &T, name: &str, message: &str, color: &s
             count_width = info.count_width
         );
 
+        let color = if info.color { color } else { "" };
+        let reset = if info.color { "\u{001b}[0m" } else { "" };
+
         println!(
             "{} : {:<parser_width$} : {}",
             forward_backword,
-            format!("{}{}   {}{}", color, " ".repeat(depth), name, "\u{001b}[0m"),
+            format!("{}{}   {}{}", color, " ".repeat(depth), name, reset),
             message,
             parser_width = info.parser_width,
         );
