@@ -1,6 +1,8 @@
 # Change Log
 
-## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.2.1...Unreleased) - ReleaseDate
+## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.3.0...Unreleased) - ReleaseDate
+
+## [v0.3.0](https://github.com/dalance/nom-tracable/compare/v0.2.1...v0.3.0) - 2019-08-13
 
 * [Added] custom field to TracableInfo
 * [Added] fold support
