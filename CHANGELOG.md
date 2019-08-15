@@ -2,6 +2,8 @@
 
 ## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.3.0...Unreleased) - ReleaseDate
 
+* [Changed] update nom_locate/syn/quote
+
 ## [v0.3.0](https://github.com/dalance/nom-tracable/compare/v0.2.1...v0.3.0) - 2019-08-13
 
 * [Added] custom field to TracableInfo

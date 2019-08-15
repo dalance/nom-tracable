@@ -37,11 +37,11 @@ fn impl_tracable_parser_default(item: &ItemFn) -> Stmt {
 }
 
 fn impl_tracable_parser_trace(item: &ItemFn) -> Stmt {
-    let ident = &item.ident;
+    let ident = &item.sig.ident;
 
-    let input = if let Some(x) = &item.decl.inputs.first() {
-        match x.value() {
-            FnArg::Captured(arg) => &arg.pat,
+    let input = if let Some(x) = &item.sig.inputs.first() {
+        match x {
+            FnArg::Typed(arg) => &arg.pat,
             _ => panic!("function with #[tracable_parser] must have an argument"),
         }
     } else {

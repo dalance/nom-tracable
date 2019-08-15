@@ -27,5 +27,5 @@ trace   = []
 
 [dependencies]
 nom                 = "5.0.0"
-nom_locate          = "0.4.0"
+nom_locate          = "1.0.0"
 nom-tracable-macros = {path = "../nom-tracable-macros", version = "^0.3.0"}
