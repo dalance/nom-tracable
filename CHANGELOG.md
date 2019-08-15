@@ -1,6 +1,8 @@
 # Change Log
 
-## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.3.0...Unreleased) - ReleaseDate
+## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.3.1...Unreleased) - ReleaseDate
+
+## [v0.3.1](https://github.com/dalance/nom-tracable/compare/v0.3.0...v0.3.1) - 2019-08-15
 
 * [Changed] update nom_locate/syn/quote
 
