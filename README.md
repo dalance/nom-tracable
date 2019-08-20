@@ -11,6 +11,7 @@ Extension of [nom](https://github.com/Geal/nom) to trace parser.
 * Forward/backward call count
 * Folding the specific parsers
 * Histogram/cumulative histogram of parser call count
+* Zero-overhead when trace is disabled
 
 ![nom-tracable](https://user-images.githubusercontent.com/4331004/63342515-a30bbc00-c386-11e9-994c-432749b168fa.png)
 
