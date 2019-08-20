@@ -5,6 +5,13 @@ Extension of [nom](https://github.com/Geal/nom) to trace parser.
 [![Crates.io](https://img.shields.io/crates/v/nom-tracable.svg)](https://crates.io/crates/nom-tracable)
 [![Docs.rs](https://docs.rs/nom-tracable/badge.svg)](https://docs.rs/nom-tracable)
 
+## Feature
+
+* Tracing parser by colored format
+* Forward/backward call count
+* Folding the specific parsers
+* Histogram/cumulative histogram of parser call count
+
 ## Requirement
 
 nom must be 5.0.0 or later.
