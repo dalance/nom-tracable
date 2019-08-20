@@ -2,7 +2,7 @@ use nom::branch::*;
 use nom::character::complete::*;
 use nom::IResult;
 use nom_locate::LocatedSpanEx;
-use nom_tracable::{tracable_parser, TracableInfo};
+use nom_tracable::{cumulative_histogram, histogram, tracable_parser, TracableInfo};
 
 type Span<'a> = LocatedSpanEx<&'a str, TracableInfo>;
 
@@ -65,4 +65,7 @@ fn test() {
         TracableInfo::new().fold("term").color(false),
     ));
     assert_eq!("\"1-1+1+1-1+1+1-1+1\"", format!("{:?}", ret.unwrap().1));
+
+    histogram();
+    cumulative_histogram();
 }

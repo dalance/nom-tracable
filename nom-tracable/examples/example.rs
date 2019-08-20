@@ -2,7 +2,7 @@ use nom::branch::*;
 use nom::character::complete::*;
 use nom::IResult;
 use nom_locate::LocatedSpanEx;
-use nom_tracable::{tracable_parser, TracableInfo};
+use nom_tracable::{cumulative_histogram, histogram, tracable_parser, TracableInfo};
 
 // Input type must implement trait Tracable
 // nom_locate::LocatedSpanEx<T, TracableInfo> implements it.
@@ -34,17 +34,22 @@ pub fn expr_minus(s: Span) -> IResult<Span, String> {
 
 #[tracable_parser]
 pub fn term(s: Span) -> IResult<Span, String> {
+    let (s, x) = term_internal(s)?;
+    Ok((s, x))
+}
+
+#[tracable_parser]
+pub fn term_internal(s: Span) -> IResult<Span, String> {
     let (s, x) = char('1')(s)?;
     Ok((s, x.to_string()))
 }
 
 fn main() {
     // Configure trace setting
-    let info = TracableInfo::new().parser_width(64);
-    let ret = expr(LocatedSpanEx::new_extra("1-1+1+1-1+1+1-1+1", info));
-    println!("{:?}", ret.unwrap().1);
+    let info = TracableInfo::new().parser_width(64).fold("term");
+    let ret = expr(LocatedSpanEx::new_extra("1-1+1+1-1", info));
 
-    let info = TracableInfo::new().backward(false).parser_width(64);
-    let ret = expr(LocatedSpanEx::new_extra("1-1+1+1-1+1+1-1+1", info));
-    println!("{:?}", ret.unwrap().1);
+    // Show histogram
+    histogram();
+    cumulative_histogram();
 }

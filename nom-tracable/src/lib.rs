@@ -236,7 +236,12 @@ impl<T: std::fmt::Display, U: HasTracableInfo> Tracable for nom_locate::LocatedS
     }
 
     fn format(&self) -> String {
-        format!("{:<8} : {}", self.offset, self.fragment)
+        let fragment = format!("{}", self.fragment);
+        format!(
+            "{:<8} : {}",
+            self.offset,
+            fragment.lines().next().unwrap_or_else(|| "")
+        )
     }
 
     fn header(&self) -> String {
@@ -250,6 +255,9 @@ struct TracableStorage {
     backward_count: usize,
     parser_indexes: HashMap<String, usize>,
     parser_index_next: usize,
+    histogram: HashMap<String, usize>,
+    cumulative_histogram: HashMap<String, usize>,
+    cumulative_working: HashMap<String, usize>,
 }
 
 #[allow(dead_code)]
@@ -261,6 +269,9 @@ impl TracableStorage {
     fn init(&mut self) {
         self.forward_count = 0;
         self.backward_count = 0;
+        self.histogram.clear();
+        self.cumulative_histogram.clear();
+        self.cumulative_working.clear();
     }
 
     fn get_forward_count(&self) -> usize {
@@ -277,6 +288,42 @@ impl TracableStorage {
 
     fn inc_backward_count(&mut self) {
         self.backward_count += 1
+    }
+
+    fn inc_histogram(&mut self, key: &str) {
+        let next = if let Some(x) = self.histogram.get(key) {
+            x + 1
+        } else {
+            1
+        };
+        self.histogram.insert(String::from(key), next);
+    }
+
+    fn inc_cumulative_histogram(&mut self, key: &str, cnt: usize) {
+        let next = if let Some(x) = self.cumulative_histogram.get(key) {
+            x + cnt
+        } else {
+            cnt
+        };
+        self.cumulative_histogram.insert(String::from(key), next);
+    }
+
+    fn add_cumulative(&mut self, key: &str) {
+        self.cumulative_working.insert(String::from(key), 0);
+    }
+
+    fn inc_cumulative(&mut self) {
+        for val in self.cumulative_working.values_mut() {
+            *val = *val + 1;
+        }
+    }
+
+    fn del_cumulative(&mut self, key: &str) {
+        self.cumulative_working.remove(key);
+    }
+
+    fn get_cumulative(&mut self, key: &str) -> Option<&usize> {
+        self.cumulative_working.get(key)
     }
 
     fn get_parser_index(&mut self, key: &str) -> usize {
@@ -296,6 +343,70 @@ thread_local!(
         core::cell::RefCell::new(crate::TracableStorage::new())
     }
 );
+
+/// Show histogram of parser call count.
+pub fn histogram() {
+    crate::TRACABLE_STORAGE.with(|storage| {
+        let storage = storage.borrow();
+        show_histogram("histogram", &storage.histogram);
+    });
+}
+
+/// Show cumulative histogram of parser call count.
+pub fn cumulative_histogram() {
+    crate::TRACABLE_STORAGE.with(|storage| {
+        let storage = storage.borrow();
+        show_histogram("cumulative histogram", &storage.cumulative_histogram);
+    });
+}
+
+fn show_histogram(title: &str, map: &HashMap<String, usize>) {
+    let mut result = Vec::new();
+    let mut max_parser_len = "parser".len();
+    let mut max_count = 0;
+    let mut max_count_len = "count".len();
+    for (p, c) in map {
+        result.push((p, c));
+        max_parser_len = max_parser_len.max(p.len());
+        max_count = max_count.max(*c);
+        max_count_len = max_count_len.max(format!("{}", c).len());
+    }
+
+    result.sort_by(|a, b| b.1.partial_cmp(a.1).unwrap());
+
+    let bar_length = 50;
+
+    println!(
+        "\n{:<parser$} | {:<bar$} | {}",
+        "parser",
+        title,
+        "count",
+        parser = max_parser_len,
+        bar = bar_length,
+    );
+    println!(
+        "{:<parser$} | {:<bar$} | {}",
+        "-".repeat(max_parser_len),
+        "-".repeat(bar_length),
+        "-".repeat(max_count_len),
+        parser = max_parser_len,
+        bar = bar_length,
+    );
+    for (p, c) in &result {
+        let bar = *c * bar_length / max_count;
+        if bar > 0 {
+            println!(
+                "{:<parser$} | {}{} | {}",
+                p,
+                ".".repeat(bar),
+                " ".repeat(bar_length - bar),
+                c,
+                parser = max_parser_len,
+            );
+        }
+    }
+    println!("");
+}
 
 /// Function to display forward trace.
 /// This is inserted by `#[tracable_parser]`.
@@ -381,6 +492,12 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
         );
     }
 
+    crate::TRACABLE_STORAGE.with(|storage| {
+        storage.borrow_mut().inc_histogram(name);
+        storage.borrow_mut().add_cumulative(name);
+        storage.borrow_mut().inc_cumulative();
+    });
+
     let input = if info.folded(name) {
         let info = info.forward(false).backward(false).custom(false);
         input.set_tracable_info(info)
@@ -401,6 +518,11 @@ pub fn backward_trace<T: Tracable, U>(
     info: TracableInfo,
 ) -> IResult<T, U> {
     let depth = info.depth;
+
+    crate::TRACABLE_STORAGE.with(|storage| {
+        let cnt = *storage.borrow_mut().get_cumulative(name).unwrap();
+        storage.borrow_mut().inc_cumulative_histogram(name, cnt);
+    });
 
     if info.backward {
         let backward_count = crate::TRACABLE_STORAGE.with(|storage| {
