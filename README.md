@@ -12,6 +12,8 @@ Extension of [nom](https://github.com/Geal/nom) to trace parser.
 * Folding the specific parsers
 * Histogram/cumulative histogram of parser call count
 
+![nom-tracable](https://user-images.githubusercontent.com/4331004/63342515-a30bbc00-c386-11e9-994c-432749b168fa.png)
+
 ## Requirement
 
 nom must be 5.0.0 or later.
@@ -44,11 +46,7 @@ You can try an example by the following command.
 $ cargo run --manifest-path=nom-tracable/Cargo.toml --example example --features trace
 ```
 
-The output of the example is below:
-
-![nom-tracable](https://user-images.githubusercontent.com/4331004/63342515-a30bbc00-c386-11e9-994c-432749b168fa.png)
-
-Succeeded parsers are green and failed parsers are red.
+The example is below:
 
 ```rust
 use nom::branch::*;
