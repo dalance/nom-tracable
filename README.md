@@ -31,11 +31,15 @@ This implements `Tracable` in this crate.
 ## Usage
 
 ```Cargo.toml
+[features]
+default = []
+trace   = ["nom-tracable/trace"]
+
 [dependencies]
 nom-tracable = "0.4.0"
 ```
 
-nom-tracable provide `trace` feature.
+nom-tracable provides `trace` feature, and the crate using nom-tracable must provide the feature too.
 When `trace` is enabled, trace dump is enabled.
 If not, there is no additional cost.
 
