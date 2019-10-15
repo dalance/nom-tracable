@@ -512,11 +512,11 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
 /// Function to display backward trace.
 /// This is inserted by `#[tracable_parser]`.
 #[cfg(feature = "trace")]
-pub fn backward_trace<T: Tracable, U>(
-    input: IResult<T, U>,
+pub fn backward_trace<T: Tracable, U, V>(
+    input: IResult<T, U, V>,
     name: &str,
     info: TracableInfo,
-) -> IResult<T, U> {
+) -> IResult<T, U, V> {
     let depth = info.depth;
 
     crate::TRACABLE_STORAGE.with(|storage| {

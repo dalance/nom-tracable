@@ -2,6 +2,8 @@
 
 ## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.4.0...Unreleased) - ReleaseDate
 
+* [Added] error type support
+
 ## [v0.4.0](https://github.com/dalance/nom-tracable/compare/v0.3.1...v0.4.0) - 2019-08-20
 
 * [Added] histogram support
