@@ -1,10 +1,10 @@
 use nom::branch::*;
 use nom::character::complete::*;
 use nom::IResult;
-use nom_locate::LocatedSpanEx;
+use nom_locate::LocatedSpan;
 use nom_tracable::{cumulative_histogram, histogram, tracable_parser, TracableInfo};
 
-type Span<'a> = LocatedSpanEx<&'a str, TracableInfo>;
+type Span<'a> = LocatedSpan<&'a str, TracableInfo>;
 
 #[tracable_parser]
 pub fn expr(s: Span) -> IResult<Span, String> {
@@ -42,25 +42,25 @@ pub fn term_inner(s: Span) -> IResult<Span, String> {
 
 #[test]
 fn test() {
-    let ret = expr(LocatedSpanEx::new_extra("1", TracableInfo::new()));
+    let ret = expr(LocatedSpan::new_extra("1", TracableInfo::new()));
     assert_eq!("\"1\"", format!("{:?}", ret.unwrap().1));
 
-    let ret = expr(LocatedSpanEx::new_extra("1+1", TracableInfo::new()));
+    let ret = expr(LocatedSpan::new_extra("1+1", TracableInfo::new()));
     assert_eq!("\"1+1\"", format!("{:?}", ret.unwrap().1));
 
-    let ret = expr(LocatedSpanEx::new_extra(
+    let ret = expr(LocatedSpan::new_extra(
         "1-1+1+1-1+1+1-1+1",
         TracableInfo::new(),
     ));
     assert_eq!("\"1-1+1+1-1+1+1-1+1\"", format!("{:?}", ret.unwrap().1));
 
-    let ret = expr(LocatedSpanEx::new_extra(
+    let ret = expr(LocatedSpan::new_extra(
         "1-1+1+1-1+1+1-1+1",
         TracableInfo::new().fold("term"),
     ));
     assert_eq!("\"1-1+1+1-1+1+1-1+1\"", format!("{:?}", ret.unwrap().1));
 
-    let ret = expr(LocatedSpanEx::new_extra(
+    let ret = expr(LocatedSpan::new_extra(
         "1-1+1+1-1+1+1-1+1",
         TracableInfo::new().fold("term").color(false),
     ));
