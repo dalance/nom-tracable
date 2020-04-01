@@ -25,7 +25,7 @@ Therefore `&str` and `&[u8]` can't be used.
 You can define a wrapper type of `&str` or `&[u8]` and implement `Tracable`.
 
 nom-tracable is integrated with [nom_locate](https://github.com/fflorent/nom_locate).
-You can use `nom_locate::LocatedSpanEx<T, TracableInfo>` as input type.
+You can use `nom_locate::LocatedSpan<T, TracableInfo>` as input type.
 This implements `Tracable` in this crate.
 
 ## Usage
@@ -57,12 +57,12 @@ The example is below:
 use nom::branch::*;
 use nom::character::complete::*;
 use nom::IResult;
-use nom_locate::LocatedSpanEx;
+use nom_locate::LocatedSpan;
 use nom_tracable::{cumulative_histogram, histogram, tracable_parser, TracableInfo};
 
 // Input type must implement trait Tracable
-// nom_locate::LocatedSpanEx<T, TracableInfo> implements it.
-type Span<'a> = LocatedSpanEx<&'a str, TracableInfo>;
+// nom_locate::LocatedSpan<T, TracableInfo> implements it.
+type Span<'a> = LocatedSpan<&'a str, TracableInfo>;
 
 // Apply tracable_parser by custom attribute
 #[tracable_parser]
@@ -103,7 +103,7 @@ pub fn term_internal(s: Span) -> IResult<Span, String> {
 fn main() {
     // Configure trace setting
     let info = TracableInfo::new().parser_width(64).fold("term");
-    let ret = expr(LocatedSpanEx::new_extra("1-1+1+1-1", info));
+    let ret = expr(LocatedSpan::new_extra("1-1+1+1-1", info));
 
     // Show histogram
     histogram();
