@@ -2,6 +2,8 @@
 
 ## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.4.1...Unreleased) - ReleaseDate
 
+* [Added] nom_locate v2.0.0 support
+
 ## [v0.4.1](https://github.com/dalance/nom-tracable/compare/v0.4.0...v0.4.1) - 2019-10-15
 
 * [Added] error type support
