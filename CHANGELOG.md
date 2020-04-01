@@ -1,6 +1,8 @@
 # Change Log
 
-## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.4.1...Unreleased) - ReleaseDate
+## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.5.0...Unreleased) - ReleaseDate
+
+## [v0.5.0](https://github.com/dalance/nom-tracable/compare/v0.4.1...v0.5.0) - 2020-04-01
 
 * [Added] nom_locate v2.0.0 support
 
