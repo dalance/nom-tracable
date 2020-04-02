@@ -5,7 +5,6 @@
 //! The following example show a quick example.
 //!
 //! ```
-//! use nom::branch::*;
 //! use nom::character::complete::*;
 //! use nom::IResult;
 //! use nom_locate::LocatedSpan;
@@ -33,9 +32,11 @@
 
 #[cfg(feature = "trace")]
 use nom::IResult;
+/// Custom attribute to enable trace
 pub use nom_tracable_macros::tracable_parser;
 use std::collections::HashMap;
 
+/// Trait to indicate the type has information for tracing.
 pub trait Tracable: HasTracableInfo {
     fn inc_depth(self) -> Self;
     fn dec_depth(self) -> Self;
@@ -384,6 +385,7 @@ impl TracableStorage {
     }
 }
 
+#[cfg(feature = "trace")]
 thread_local!(
     static TRACABLE_STORAGE: core::cell::RefCell<crate::TracableStorage> = {
         core::cell::RefCell::new(crate::TracableStorage::new())
@@ -391,21 +393,96 @@ thread_local!(
 );
 
 /// Show histogram of parser call count.
+///
+/// The statistics information to generate histogram is reset at each parser call.
+/// Therefore `histogram` should be called before next parser call.
+/// The information is thread independent because it is stored at thread local storage.
+///
+/// ```
+/// # use nom::character::complete::*;
+/// # use nom::IResult;
+/// # use nom_locate::LocatedSpan;
+/// # use nom_tracable::{cumulative_histogram, tracable_parser, TracableInfo};
+/// #
+/// # type Span<'a> = LocatedSpan<&'a str, TracableInfo>;
+/// #
+/// # #[tracable_parser]
+/// # pub fn term(s: Span) -> IResult<Span, String> {
+/// #     let (s, x) = char('1')(s)?;
+/// #     Ok((s, x.to_string()))
+/// # }
+/// #
+/// # #[test]
+/// # fn test() {
+///     let ret = term(LocatedSpan::new_extra("1", TracableInfo::new()));
+///     histogram(); // Show histogram of "1" parsing
+///
+///     let ret = term(LocatedSpan::new_extra("11", TracableInfo::new()));
+///     histogram(); // Show histogram of "11" parsing
+/// # }
+/// ```
 pub fn histogram() {
+    histogram_internal();
+}
+
+#[cfg(feature = "trace")]
+fn histogram_internal() {
     crate::TRACABLE_STORAGE.with(|storage| {
         let storage = storage.borrow();
         show_histogram("histogram", &storage.histogram);
     });
 }
 
+#[cfg(not(feature = "trace"))]
+fn histogram_internal() {}
+
 /// Show cumulative histogram of parser call count.
+///
+/// The call count includes the counts of children parsers.
+///
+/// The statistics information to generate histogram is reset at each parser call.
+/// Therefore `cumulative_histogram` should be called before next parser call.
+/// The information is thread independent because it is stored at thread local storage.
+///
+/// ```
+/// # use nom::character::complete::*;
+/// # use nom::IResult;
+/// # use nom_locate::LocatedSpan;
+/// # use nom_tracable::{cumulative_histogram, tracable_parser, TracableInfo};
+/// #
+/// # type Span<'a> = LocatedSpan<&'a str, TracableInfo>;
+/// #
+/// # #[tracable_parser]
+/// # pub fn term(s: Span) -> IResult<Span, String> {
+/// #     let (s, x) = char('1')(s)?;
+/// #     Ok((s, x.to_string()))
+/// # }
+/// #
+/// # #[test]
+/// # fn test() {
+///     let ret = term(LocatedSpan::new_extra("1", TracableInfo::new()));
+///     cumulative_histogram(); // Show cumulative histogram of "1" parsing
+///
+///     let ret = term(LocatedSpan::new_extra("11", TracableInfo::new()));
+///     cumulative_histogram(); // Show cumulative histogram of "11" parsing
+/// # }
+/// ```
 pub fn cumulative_histogram() {
+    cumulative_histogram_internal();
+}
+
+#[cfg(feature = "trace")]
+fn cumulative_histogram_internal() {
     crate::TRACABLE_STORAGE.with(|storage| {
         let storage = storage.borrow();
         show_histogram("cumulative histogram", &storage.cumulative_histogram);
     });
 }
 
+#[cfg(not(feature = "trace"))]
+fn cumulative_histogram_internal() {}
+
+#[allow(dead_code)]
 fn show_histogram(title: &str, map: &HashMap<String, usize>) {
     let mut result = Vec::new();
     let mut max_parser_len = "parser".len();
