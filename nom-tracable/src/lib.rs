@@ -304,7 +304,7 @@ struct TracableStorage {
     parser_index_next: usize,
     histogram: HashMap<String, usize>,
     cumulative_histogram: HashMap<String, usize>,
-    cumulative_working: HashMap<String, usize>,
+    cumulative_working: HashMap<(String, usize), usize>,
 }
 
 #[allow(dead_code)]
@@ -355,8 +355,9 @@ impl TracableStorage {
         self.cumulative_histogram.insert(String::from(key), next);
     }
 
-    fn add_cumulative(&mut self, key: &str) {
-        self.cumulative_working.insert(String::from(key), 0);
+    fn add_cumulative(&mut self, key: &str, depth: usize) {
+        self.cumulative_working
+            .insert((String::from(key), depth), 0);
     }
 
     fn inc_cumulative(&mut self) {
@@ -365,12 +366,12 @@ impl TracableStorage {
         }
     }
 
-    fn del_cumulative(&mut self, key: &str) {
-        self.cumulative_working.remove(key);
+    fn del_cumulative(&mut self, key: &str, depth: usize) {
+        self.cumulative_working.remove(&(key.to_string(), depth));
     }
 
-    fn get_cumulative(&mut self, key: &str) -> Option<&usize> {
-        self.cumulative_working.get(key)
+    fn get_cumulative(&mut self, key: &str, depth: usize) -> Option<&usize> {
+        self.cumulative_working.get(&(key.to_string(), depth))
     }
 
     fn get_parser_index(&mut self, key: &str) -> usize {
@@ -617,7 +618,7 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
 
     crate::TRACABLE_STORAGE.with(|storage| {
         storage.borrow_mut().inc_histogram(name);
-        storage.borrow_mut().add_cumulative(name);
+        storage.borrow_mut().add_cumulative(name, depth);
         storage.borrow_mut().inc_cumulative();
     });
 
@@ -643,7 +644,7 @@ pub fn backward_trace<T: Tracable, U, V>(
     let depth = info.depth;
 
     crate::TRACABLE_STORAGE.with(|storage| {
-        let cnt = *storage.borrow_mut().get_cumulative(name).unwrap();
+        let cnt = *storage.borrow_mut().get_cumulative(name, depth).unwrap();
         storage.borrow_mut().inc_cumulative_histogram(name, cnt);
     });
 

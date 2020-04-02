@@ -2,6 +2,8 @@
 
 ## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.5.1...Unreleased) - ReleaseDate
 
+* [Fixed] wrong cumulative count of recursive parser
+
 ## [v0.5.1](https://github.com/dalance/nom-tracable/compare/v0.5.0...v0.5.1) - 2020-04-02
 
 * [Changed] remove unused thread local storage if "trace" feature is disabled
