@@ -2,6 +2,8 @@
 
 ## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.5.2...Unreleased) - ReleaseDate
 
+* [Added] &[u8] support [#4](https://github.com/dalance/nom-tracable/issues/4)
+
 ## [v0.5.2](https://github.com/dalance/nom-tracable/compare/v0.5.1...v0.5.2) - 2020-04-02
 
 * [Fixed] wrong cumulative count of recursive parser

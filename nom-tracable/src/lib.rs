@@ -36,6 +36,31 @@ use nom::IResult;
 pub use nom_tracable_macros::tracable_parser;
 use std::collections::HashMap;
 
+/// Trait to indicate the type can display as fragment.
+pub trait FragmentDisplay {
+    fn display(&self, width: usize) -> String;
+}
+
+impl FragmentDisplay for &[u8] {
+    fn display(&self, width: usize) -> String {
+        self.iter()
+            .take(width / 2)
+            .map(|x| format!("{:X}", x))
+            .collect()
+    }
+}
+
+impl FragmentDisplay for &str {
+    fn display(&self, width: usize) -> String {
+        self.lines()
+            .next()
+            .unwrap_or_else(|| "")
+            .chars()
+            .take(width)
+            .collect()
+    }
+}
+
 /// Trait to indicate the type has information for tracing.
 pub trait Tracable: HasTracableInfo {
     fn inc_depth(self) -> Self;
@@ -68,6 +93,8 @@ pub struct TracableInfo {
     #[cfg(feature = "trace")]
     parser_width: usize,
     #[cfg(feature = "trace")]
+    fragment_width: usize,
+    #[cfg(feature = "trace")]
     fold: u64,
 }
 
@@ -88,6 +115,8 @@ impl Default for TracableInfo {
             count_width: 10,
             #[cfg(feature = "trace")]
             parser_width: 96,
+            #[cfg(feature = "trace")]
+            fragment_width: 96,
             #[cfg(feature = "trace")]
             fold: 0,
         }
@@ -211,9 +240,7 @@ impl HasTracableInfo for TracableInfo {
 }
 
 #[cfg(feature = "trace")]
-impl<T: std::fmt::Display, U: HasTracableInfo> HasTracableInfo
-    for nom_locate1::LocatedSpanEx<T, U>
-{
+impl<T, U: HasTracableInfo> HasTracableInfo for nom_locate1::LocatedSpanEx<T, U> {
     fn get_tracable_info(&self) -> TracableInfo {
         self.extra.get_tracable_info()
     }
@@ -225,7 +252,7 @@ impl<T: std::fmt::Display, U: HasTracableInfo> HasTracableInfo
 }
 
 #[cfg(feature = "trace")]
-impl<T: std::fmt::Display, U: HasTracableInfo> Tracable for nom_locate1::LocatedSpanEx<T, U> {
+impl<T: FragmentDisplay, U: HasTracableInfo> Tracable for nom_locate1::LocatedSpanEx<T, U> {
     fn inc_depth(self) -> Self {
         let info = self.get_tracable_info();
         let info = info.depth(info.depth + 1);
@@ -239,12 +266,9 @@ impl<T: std::fmt::Display, U: HasTracableInfo> Tracable for nom_locate1::Located
     }
 
     fn format(&self) -> String {
-        let fragment = format!("{}", self.fragment);
-        format!(
-            "{:<8} : {}",
-            self.offset,
-            fragment.lines().next().unwrap_or_else(|| "")
-        )
+        let info = self.get_tracable_info();
+        let fragment = self.fragment.display(info.fragment_width);
+        format!("{:<8} : {}", self.offset, fragment)
     }
 
     fn header(&self) -> String {
@@ -253,9 +277,7 @@ impl<T: std::fmt::Display, U: HasTracableInfo> Tracable for nom_locate1::Located
 }
 
 #[cfg(feature = "trace")]
-impl<T: std::fmt::Display + nom::AsBytes, U: HasTracableInfo> HasTracableInfo
-    for nom_locate::LocatedSpan<T, U>
-{
+impl<T, U: HasTracableInfo> HasTracableInfo for nom_locate::LocatedSpan<T, U> {
     fn get_tracable_info(&self) -> TracableInfo {
         self.extra.get_tracable_info()
     }
@@ -267,7 +289,7 @@ impl<T: std::fmt::Display + nom::AsBytes, U: HasTracableInfo> HasTracableInfo
 }
 
 #[cfg(feature = "trace")]
-impl<T: std::fmt::Display + nom::AsBytes, U: HasTracableInfo> Tracable
+impl<T: FragmentDisplay + nom::AsBytes, U: HasTracableInfo> Tracable
     for nom_locate::LocatedSpan<T, U>
 {
     fn inc_depth(self) -> Self {
@@ -283,12 +305,9 @@ impl<T: std::fmt::Display + nom::AsBytes, U: HasTracableInfo> Tracable
     }
 
     fn format(&self) -> String {
-        let fragment = format!("{}", self.fragment());
-        format!(
-            "{:<8} : {}",
-            self.location_offset(),
-            fragment.lines().next().unwrap_or_else(|| "")
-        )
+        let info = self.get_tracable_info();
+        let fragment = self.fragment().display(info.fragment_width);
+        format!("{:<8} : {}", self.location_offset(), fragment)
     }
 
     fn header(&self) -> String {

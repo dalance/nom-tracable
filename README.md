@@ -29,6 +29,9 @@ nom-tracable is integrated with [nom_locate](https://github.com/fflorent/nom_loc
 You can use `nom_locate::LocatedSpan<T, TracableInfo>` as input type.
 This implements `Tracable` in this crate.
 
+Note: `T` in `nom_locate::LocatedSpan<T, TracableInfo>` must implement `FragmentDisplay`.
+`&str` and `&[u8]` implement it in this crate. If you want to use another type as `T`, you should implement `FragmentDisplay` for it.
+
 ## Usage
 
 ```Cargo.toml
@@ -46,13 +49,14 @@ If not, there is no additional cost.
 
 ## Example
 
-You can try an example by the following command.
+You can try examples by the following command.
 
 ```
-$ cargo run --manifest-path=nom-tracable/Cargo.toml --example example --features trace
+$ cargo run --manifest-path=nom-tracable/Cargo.toml --example str_parser --features trace
+$ cargo run --manifest-path=nom-tracable/Cargo.toml --example u8_parser --features trace
 ```
 
-The example is below:
+`str_parser` is below:
 
 ```rust
 use nom::branch::*;
