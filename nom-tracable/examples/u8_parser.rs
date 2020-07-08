@@ -46,7 +46,10 @@ pub fn term_internal(s: Span) -> IResult<Span, String> {
 
 fn main() {
     // Configure trace setting
-    let info = TracableInfo::new().parser_width(64).fold("term");
+    let info = TracableInfo::new()
+        .parser_width(64)
+        .fragment_width(20)
+        .fold("term");
     let _ret = expr(LocatedSpan::new_extra("1-1+1+1-1".as_bytes(), info));
 
     // Show histogram

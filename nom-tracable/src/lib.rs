@@ -170,6 +170,12 @@ impl TracableInfo {
         self
     }
 
+    /// Set the width of fragment.
+    pub fn fragment_width(mut self, x: usize) -> Self {
+        self.fragment_width = x;
+        self
+    }
+
     /// Set the name of folding parser.
     pub fn fold(mut self, x: &str) -> Self {
         let index =
@@ -221,6 +227,10 @@ impl TracableInfo {
     }
 
     pub fn parser_width(self, _x: usize) -> Self {
+        self
+    }
+
+    pub fn fragment_width(self, _x: usize) -> Self {
         self
     }
 
