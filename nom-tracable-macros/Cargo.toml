@@ -1,6 +1,6 @@
 [package]
 name = "nom-tracable-macros"
-version = "0.5.2"
+version = "0.6.0"
 authors = ["dalance <dalance@gmail.com>"]
 repository = "https://github.com/dalance/nom-tracable"
 keywords = ["parser", "nom"]
