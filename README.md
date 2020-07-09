@@ -40,7 +40,7 @@ default = []
 trace   = ["nom-tracable/trace"]
 
 [dependencies]
-nom-tracable = "0.6.1"
+nom-tracable = "0.6.2"
 ```
 
 nom-tracable provides `trace` feature, and the crate using nom-tracable must provide the feature too.
