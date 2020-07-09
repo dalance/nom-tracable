@@ -2,13 +2,14 @@ use nom::branch::*;
 use nom::character::complete::*;
 use nom::{AsBytes, IResult, InputIter, Offset, Slice};
 use nom_locate::LocatedSpan;
-use nom_tracable::{
-    cumulative_histogram, histogram, tracable_parser, HasTracableInfo, Tracable, TracableInfo,
-};
+use nom_tracable::{cumulative_histogram, histogram, tracable_parser, TracableInfo};
+#[cfg(feature = "trace")]
+use nom_tracable::{HasTracableInfo, Tracable};
 
 #[derive(Clone)]
 pub struct Span<'a>(LocatedSpan<&'a [u8], TracableInfo>);
 
+#[cfg(feature = "trace")]
 impl<'a> HasTracableInfo for Span<'a> {
     fn get_tracable_info(&self) -> TracableInfo {
         self.0.extra.get_tracable_info()
@@ -19,6 +20,7 @@ impl<'a> HasTracableInfo for Span<'a> {
         self
     }
 }
+#[cfg(feature = "trace")]
 impl<'a> Tracable for Span<'a> {
     fn inc_depth(self) -> Self {
         let info = self.get_tracable_info();
