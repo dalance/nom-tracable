@@ -79,23 +79,23 @@ pub trait HasTracableInfo {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct TracableInfo {
     #[cfg(feature = "trace")]
-    depth: usize,
+    pub depth: usize,
     #[cfg(feature = "trace")]
-    forward: bool,
+    pub forward: bool,
     #[cfg(feature = "trace")]
-    backward: bool,
+    pub backward: bool,
     #[cfg(feature = "trace")]
-    custom: bool,
+    pub custom: bool,
     #[cfg(feature = "trace")]
-    color: bool,
+    pub color: bool,
     #[cfg(feature = "trace")]
-    count_width: usize,
+    pub count_width: usize,
     #[cfg(feature = "trace")]
-    parser_width: usize,
+    pub parser_width: usize,
     #[cfg(feature = "trace")]
-    fragment_width: usize,
+    pub fragment_width: usize,
     #[cfg(feature = "trace")]
-    fold: u64,
+    pub fold: u64,
 }
 
 impl Default for TracableInfo {
@@ -129,7 +129,7 @@ impl TracableInfo {
         TracableInfo::default()
     }
 
-    fn depth(mut self, x: usize) -> Self {
+    pub fn depth(mut self, x: usize) -> Self {
         self.depth = x;
         self
     }
