@@ -45,7 +45,7 @@ impl FragmentDisplay for &[u8] {
     fn display(&self, width: usize) -> String {
         self.iter()
             .take(width / 2)
-            .map(|x| format!("{:X}", x))
+            .map(|x| format!("{:>02X}", x))
             .collect()
     }
 }

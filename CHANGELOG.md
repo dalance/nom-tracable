@@ -2,6 +2,8 @@
 
 ## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.6.1...Unreleased) - ReleaseDate
 
+* [Fixed] format string of u8
+
 ## [v0.6.1](https://github.com/dalance/nom-tracable/compare/v0.6.0...v0.6.1) - 2020-07-08
 
 * [Added] fragment_width setting
