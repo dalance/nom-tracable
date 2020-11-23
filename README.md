@@ -1,7 +1,7 @@
 # nom-tracable
 Extension of [nom](https://github.com/Geal/nom) to trace parser.
 
-[![Build Status](https://dev.azure.com/dalance/nom-tracable/_apis/build/status/dalance.nom-tracable?branchName=master)](https://dev.azure.com/dalance/nom-tracable/_build/latest?definitionId=1&branchName=master)
+[![Actions Status](https://github.com/dalance/nom-tracable/workflows/Regression/badge.svg)](https://github.com/dalance/nom-tracable/actions)
 [![Crates.io](https://img.shields.io/crates/v/nom-tracable.svg)](https://crates.io/crates/nom-tracable)
 [![Docs.rs](https://docs.rs/nom-tracable/badge.svg)](https://docs.rs/nom-tracable)
 
