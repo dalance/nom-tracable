@@ -26,7 +26,7 @@ trace   = []
 nom                 = "6"
 nom_locate          = "3"
 nom_locate1         = {version = "1", package = "nom_locate"}
-nom-tracable-macros = {path = "../nom-tracable-macros", version = "^0.6.0"}
+nom-tracable-macros = {path = "../nom-tracable-macros", version = "^0.7.0"}
 
 [dev-dependencies]
 nom5        = {version = "5", package = "nom"}
