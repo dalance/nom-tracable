@@ -2,6 +2,8 @@
 
 ## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.6.2...Unreleased) - ReleaseDate
 
+* [Added] nom v6.0.0 support
+
 ## [v0.6.2](https://github.com/dalance/nom-tracable/compare/v0.6.1...v0.6.2) - 2020-07-09
 
 * [Fixed] format string of u8

@@ -2,7 +2,7 @@ use nom::branch::*;
 use nom::character::complete::*;
 #[cfg(feature = "trace")]
 use nom::{AsBytes, Offset};
-use nom::{IResult, InputIter, Slice};
+use nom::{IResult, InputIter, Needed, Slice};
 use nom_locate::LocatedSpan;
 use nom_tracable::{cumulative_histogram, histogram, tracable_parser, TracableInfo};
 #[cfg(feature = "trace")]
@@ -54,7 +54,7 @@ impl<'a> Tracable for Span<'a> {
 impl<'a> InputIter for Span<'a> {
     type Item = u8;
     type Iter = std::iter::Enumerate<Self::IterElem>;
-    type IterElem = std::iter::Map<std::slice::Iter<'a, Self::Item>, fn(&u8) -> u8>;
+    type IterElem = std::iter::Copied<std::slice::Iter<'a, Self::Item>>;
     #[inline]
     fn iter_indices(&self) -> Self::Iter {
         self.0.iter_indices()
@@ -71,7 +71,7 @@ impl<'a> InputIter for Span<'a> {
         self.0.position(predicate)
     }
     #[inline]
-    fn slice_index(&self, count: usize) -> Option<usize> {
+    fn slice_index(&self, count: usize) -> Result<usize, Needed> {
         self.0.slice_index(count)
     }
 }
