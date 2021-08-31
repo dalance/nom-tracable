@@ -1,6 +1,8 @@
 # Change Log
 
-## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.7.0...Unreleased) - ReleaseDate
+## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.8.0...Unreleased) - ReleaseDate
+
+## [v0.8.0](https://github.com/dalance/nom-tracable/compare/v0.7.0...v0.8.0) - 2021-08-31
 
 ## [v0.7.0](https://github.com/dalance/nom-tracable/compare/v0.6.2...v0.7.0) - 2020-11-26
 
