@@ -10,7 +10,7 @@ description = "Helper crate of nom-tracable"
 edition = "2018"
 
 [package.metadata.release]
-disable-tag = true
+tag = false
 
 [lib]
 proc-macro = true
