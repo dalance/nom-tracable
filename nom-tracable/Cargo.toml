@@ -1,6 +1,6 @@
 [package]
 name = "nom-tracable"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["dalance <dalance@gmail.com>"]
 repository = "https://github.com/dalance/nom-tracable"
 keywords = ["parser", "nom"]
@@ -25,4 +25,4 @@ trace   = []
 [dependencies]
 nom                 = "7"
 nom_locate          = "4"
-nom-tracable-macros = {path = "../nom-tracable-macros", version = "^0.8.0"}
+nom-tracable-macros = {path = "../nom-tracable-macros", version = "^0.9.0" }

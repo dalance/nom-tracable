@@ -1,6 +1,8 @@
 # Change Log
 
-## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.8.0...Unreleased) - ReleaseDate
+## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.9.0...Unreleased) - ReleaseDate
+
+## [v0.9.0](https://github.com/dalance/nom-tracable/compare/v0.8.0...v0.9.0) - 2023-03-23
 
 * [Changed] remove old nom support
 
