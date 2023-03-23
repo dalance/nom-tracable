@@ -250,43 +250,6 @@ impl HasTracableInfo for TracableInfo {
 }
 
 #[cfg(feature = "trace")]
-impl<T, U: HasTracableInfo> HasTracableInfo for nom_locate1::LocatedSpanEx<T, U> {
-    fn get_tracable_info(&self) -> TracableInfo {
-        self.extra.get_tracable_info()
-    }
-
-    fn set_tracable_info(mut self, info: TracableInfo) -> Self {
-        self.extra = self.extra.set_tracable_info(info);
-        self
-    }
-}
-
-#[cfg(feature = "trace")]
-impl<T: FragmentDisplay, U: HasTracableInfo> Tracable for nom_locate1::LocatedSpanEx<T, U> {
-    fn inc_depth(self) -> Self {
-        let info = self.get_tracable_info();
-        let info = info.depth(info.depth + 1);
-        self.set_tracable_info(info)
-    }
-
-    fn dec_depth(self) -> Self {
-        let info = self.get_tracable_info();
-        let info = info.depth(info.depth - 1);
-        self.set_tracable_info(info)
-    }
-
-    fn format(&self) -> String {
-        let info = self.get_tracable_info();
-        let fragment = self.fragment.display(info.fragment_width);
-        format!("{:<8} : {}", self.offset, fragment)
-    }
-
-    fn header(&self) -> String {
-        format!("{:<8} : {}", "offset", "fragment")
-    }
-}
-
-#[cfg(feature = "trace")]
 impl<T, U: HasTracableInfo> HasTracableInfo for nom_locate::LocatedSpan<T, U> {
     fn get_tracable_info(&self) -> TracableInfo {
         self.extra.get_tracable_info()
