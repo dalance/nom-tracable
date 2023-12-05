@@ -1,7 +1,5 @@
 use nom::branch::*;
 use nom::character::complete::*;
-#[cfg(feature = "trace")]
-use nom::{AsBytes, Offset};
 use nom::{IResult, InputIter, Needed, Slice};
 use nom_locate::LocatedSpan;
 use nom_tracable::{cumulative_histogram, histogram, tracable_parser, TracableInfo};
