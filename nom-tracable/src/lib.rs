@@ -475,6 +475,7 @@ fn cumulative_histogram_internal() {
 #[cfg(not(feature = "trace"))]
 fn cumulative_histogram_internal() {}
 
+#[cfg(not(feature = "stderr"))]
 #[allow(dead_code)]
 fn show_histogram(title: &str, map: &HashMap<String, usize>) {
     let mut result = Vec::new();
@@ -524,9 +525,59 @@ fn show_histogram(title: &str, map: &HashMap<String, usize>) {
     println!("");
 }
 
+#[cfg(feature = "stderr")]
+#[allow(dead_code)]
+fn show_histogram(title: &str, map: &HashMap<String, usize>) {
+    let mut result = Vec::new();
+    let mut max_parser_len = "parser".len();
+    let mut max_count = 0;
+    let mut max_count_len = "count".len();
+    for (p, c) in map {
+        result.push((p, c));
+        max_parser_len = max_parser_len.max(p.len());
+        max_count = max_count.max(*c);
+        max_count_len = max_count_len.max(format!("{}", c).len());
+    }
+
+    result.sort_by(|a, b| b.1.partial_cmp(a.1).unwrap());
+
+    let bar_length = 50;
+
+    eprintln!(
+        "\n{:<parser$} | {:<bar$} | {}",
+        "parser",
+        title,
+        "count",
+        parser = max_parser_len,
+        bar = bar_length,
+    );
+    eprintln!(
+        "{:<parser$} | {:<bar$} | {}",
+        "-".repeat(max_parser_len),
+        "-".repeat(bar_length),
+        "-".repeat(max_count_len),
+        parser = max_parser_len,
+        bar = bar_length,
+    );
+    for (p, c) in &result {
+        let bar = *c * bar_length / max_count;
+        if bar > 0 {
+            eprintln!(
+                "{:<parser$} | {}{} | {}",
+                p,
+                ".".repeat(bar),
+                " ".repeat(bar_length - bar),
+                c,
+                parser = max_parser_len,
+            );
+        }
+    }
+    eprintln!("");
+}
+
 /// Function to display forward trace.
 /// This is inserted by `#[tracable_parser]`.
-#[cfg(feature = "trace")]
+#[cfg(all(feature = "trace", not(feature = "stderr")))]
 pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
     let info = input.get_tracable_info();
     let depth = info.depth;
@@ -625,9 +676,110 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
     (info, input)
 }
 
+/// Function to display forward trace.
+/// This is inserted by `#[tracable_parser]`.
+#[cfg(all(feature = "trace", feature = "stderr"))]
+pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
+    let info = input.get_tracable_info();
+    let depth = info.depth;
+
+    if depth == 0 {
+        crate::TRACABLE_STORAGE.with(|storage| {
+            storage.borrow_mut().init();
+        });
+        let forward_backword = if info.forward & info.backward {
+            format!(
+                "{:<count_width$} {:<count_width$}",
+                "forward",
+                "backward",
+                count_width = info.count_width
+            )
+        } else if info.forward {
+            format!(
+                "{:<count_width$}",
+                "forward",
+                count_width = info.count_width
+            )
+        } else {
+            format!(
+                "{:<count_width$}",
+                "backward",
+                count_width = info.count_width
+            )
+        };
+
+        let control_witdh = if info.color { 11 } else { 0 };
+
+        eprintln!(
+            "\n{} : {:<parser_width$} : {}",
+            forward_backword,
+            "parser",
+            input.header(),
+            parser_width = info.parser_width - control_witdh,
+        );
+    }
+
+    if info.forward {
+        let forward_count = crate::TRACABLE_STORAGE.with(|storage| {
+            storage.borrow_mut().inc_forward_count();
+            storage.borrow().get_forward_count()
+        });
+
+        let forward_backword = if info.backward {
+            format!(
+                "{:<count_width$} {:<count_width$}",
+                forward_count,
+                "",
+                count_width = info.count_width
+            )
+        } else {
+            format!(
+                "{:<count_width$}",
+                forward_count,
+                count_width = info.count_width
+            )
+        };
+
+        let color = if info.color { "\u{001b}[1;37m" } else { "" };
+        let reset = if info.color { "\u{001b}[0m" } else { "" };
+        let folded = if info.folded(name) { "+" } else { " " };
+
+        eprintln!(
+            "{} : {:<parser_width$} : {}",
+            forward_backword,
+            format!(
+                "{}{}-> {} {}{}",
+                color,
+                " ".repeat(depth),
+                name,
+                folded,
+                reset
+            ),
+            input.format(),
+            parser_width = info.parser_width,
+        );
+    }
+
+    crate::TRACABLE_STORAGE.with(|storage| {
+        storage.borrow_mut().inc_histogram(name);
+        storage.borrow_mut().add_cumulative(name, depth);
+        storage.borrow_mut().inc_cumulative();
+    });
+
+    let input = if info.folded(name) {
+        let info = info.forward(false).backward(false).custom(false);
+        input.set_tracable_info(info)
+    } else {
+        input
+    };
+
+    let input = input.inc_depth();
+    (info, input)
+}
+
 /// Function to display backward trace.
 /// This is inserted by `#[tracable_parser]`.
-#[cfg(feature = "trace")]
+#[cfg(all(feature = "trace", not(feature = "stderr")))]
 pub fn backward_trace<T: Tracable, U, V>(
     input: IResult<T, U, V>,
     name: &str,
@@ -718,8 +870,101 @@ pub fn backward_trace<T: Tracable, U, V>(
     }
 }
 
+/// Function to display backward trace.
+/// This is inserted by `#[tracable_parser]`.
+#[cfg(all(feature = "trace", feature = "stderr"))]
+pub fn backward_trace<T: Tracable, U, V>(
+    input: IResult<T, U, V>,
+    name: &str,
+    info: TracableInfo,
+) -> IResult<T, U, V> {
+    let depth = info.depth;
+
+    crate::TRACABLE_STORAGE.with(|storage| {
+        let cnt = *storage.borrow_mut().get_cumulative(name, depth).unwrap();
+        storage.borrow_mut().inc_cumulative_histogram(name, cnt);
+    });
+
+    if info.backward {
+        let backward_count = crate::TRACABLE_STORAGE.with(|storage| {
+            storage.borrow_mut().inc_backward_count();
+            storage.borrow().get_backward_count()
+        });
+
+        let forward_backword = if info.forward {
+            format!(
+                "{:<count_width$} {:<count_width$}",
+                "",
+                backward_count,
+                count_width = info.count_width
+            )
+        } else {
+            format!(
+                "{:<count_width$}",
+                backward_count,
+                count_width = info.count_width
+            )
+        };
+
+        let color_ok = if info.color { "\u{001b}[1;32m" } else { "" };
+        let color_err = if info.color { "\u{001b}[1;31m" } else { "" };
+        let reset = if info.color { "\u{001b}[0m" } else { "" };
+        let folded = if info.folded(name) { "+" } else { " " };
+
+        match input {
+            Ok((s, x)) => {
+                eprintln!(
+                    "{} : {:<parser_width$} : {}",
+                    forward_backword,
+                    format!(
+                        "{}{}<- {} {}{}",
+                        color_ok,
+                        " ".repeat(depth),
+                        name,
+                        folded,
+                        reset
+                    ),
+                    s.format(),
+                    parser_width = info.parser_width,
+                );
+
+                let s = if info.folded(name) {
+                    let info = s
+                        .get_tracable_info()
+                        .forward(info.forward)
+                        .backward(info.backward)
+                        .custom(info.custom);
+                    s.set_tracable_info(info)
+                } else {
+                    s
+                };
+
+                Ok((s.dec_depth(), x))
+            }
+            Err(x) => {
+                eprintln!(
+                    "{} : {:<parser_width$}",
+                    forward_backword,
+                    format!(
+                        "{}{}<- {} {}{}",
+                        color_err,
+                        " ".repeat(depth),
+                        name,
+                        folded,
+                        reset
+                    ),
+                    parser_width = info.parser_width,
+                );
+                Err(x)
+            }
+        }
+    } else {
+        input
+    }
+}
+
 /// Function to display custom trace.
-#[cfg(feature = "trace")]
+#[cfg(all(feature = "trace", not(feature = "stderr")))]
 pub fn custom_trace<T: Tracable>(input: &T, name: &str, message: &str, color: &str) {
     let info = input.get_tracable_info();
 
@@ -736,6 +981,33 @@ pub fn custom_trace<T: Tracable>(input: &T, name: &str, message: &str, color: &s
         let reset = if info.color { "\u{001b}[0m" } else { "" };
 
         println!(
+            "{} : {:<parser_width$} : {}",
+            forward_backword,
+            format!("{}{}   {}{}", color, " ".repeat(depth), name, reset),
+            message,
+            parser_width = info.parser_width,
+        );
+    }
+}
+
+/// Function to display custom trace.
+#[cfg(all(feature = "trace", feature = "stderr"))]
+pub fn custom_trace<T: Tracable>(input: &T, name: &str, message: &str, color: &str) {
+    let info = input.get_tracable_info();
+
+    if info.custom {
+        let depth = info.depth;
+        let forward_backword = format!(
+            "{:<count_width$} {:<count_width$}",
+            "",
+            "",
+            count_width = info.count_width
+        );
+
+        let color = if info.color { color } else { "" };
+        let reset = if info.color { "\u{001b}[0m" } else { "" };
+
+        eprintln!(
             "{} : {:<parser_width$} : {}",
             forward_backword,
             format!("{}{}   {}{}", color, " ".repeat(depth), name, reset),
