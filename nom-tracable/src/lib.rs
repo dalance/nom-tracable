@@ -594,6 +594,15 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
 
         let control_witdh = if info.color { 11 } else { 0 };
 
+        #[cfg(feature = "stderr")]
+        eprintln!(
+            "\n{} : {:<parser_width$} : {}",
+            forward_backword,
+            "parser",
+            input.header(),
+            parser_width = info.parser_width - control_witdh,
+        );
+        #[cfg(not(feature = "stderr"))]
         println!(
             "\n{} : {:<parser_width$} : {}",
             forward_backword,
@@ -628,6 +637,22 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
         let reset = if info.color { "\u{001b}[0m" } else { "" };
         let folded = if info.folded(name) { "+" } else { " " };
 
+        #[cfg(feature = "stderr")]
+        eprintln!(
+            "{} : {:<parser_width$} : {}",
+            forward_backword,
+            format!(
+                "{}{}-> {} {}{}",
+                color,
+                " ".repeat(depth),
+                name,
+                folded,
+                reset
+            ),
+            input.format(),
+            parser_width = info.parser_width,
+        );
+        #[cfg(not(feature = "stderr"))]
         println!(
             "{} : {:<parser_width$} : {}",
             forward_backword,
@@ -704,6 +729,22 @@ pub fn backward_trace<T: Tracable, U, V>(
 
         match input {
             Ok((s, x)) => {
+                #[cfg(feature = "stderr")]
+                eprintln!(
+                    "{} : {:<parser_width$} : {}",
+                    forward_backword,
+                    format!(
+                        "{}{}<- {} {}{}",
+                        color_ok,
+                        " ".repeat(depth),
+                        name,
+                        folded,
+                        reset
+                    ),
+                    s.format(),
+                    parser_width = info.parser_width,
+                );
+                #[cfg(not(feature = "stderr"))]
                 println!(
                     "{} : {:<parser_width$} : {}",
                     forward_backword,
@@ -733,6 +774,21 @@ pub fn backward_trace<T: Tracable, U, V>(
                 Ok((s.dec_depth(), x))
             }
             Err(x) => {
+                #[cfg(feature = "stderr")]
+                eprintln!(
+                    "{} : {:<parser_width$}",
+                    forward_backword,
+                    format!(
+                        "{}{}<- {} {}{}",
+                        color_err,
+                        " ".repeat(depth),
+                        name,
+                        folded,
+                        reset
+                    ),
+                    parser_width = info.parser_width,
+                );
+                #[cfg(not(feature = "stderr"))]
                 println!(
                     "{} : {:<parser_width$}",
                     forward_backword,
@@ -771,6 +827,15 @@ pub fn custom_trace<T: Tracable>(input: &T, name: &str, message: &str, color: &s
         let color = if info.color { color } else { "" };
         let reset = if info.color { "\u{001b}[0m" } else { "" };
 
+        #[cfg(feature = "stderr")]
+        eprintln!(
+            "{} : {:<parser_width$} : {}",
+            forward_backword,
+            format!("{}{}   {}{}", color, " ".repeat(depth), name, reset),
+            message,
+            parser_width = info.parser_width,
+        );
+        #[cfg(not(feature = "stderr"))]
         println!(
             "{} : {:<parser_width$} : {}",
             forward_backword,
