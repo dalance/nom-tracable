@@ -492,6 +492,16 @@ fn show_histogram(title: &str, map: &HashMap<String, usize>) {
 
     let bar_length = 50;
 
+    #[cfg(feature = "stderr")]
+    eprintln!(
+        "\n{:<parser$} | {:<bar$} | {}",
+        "parser",
+        title,
+        "count",
+        parser = max_parser_len,
+        bar = bar_length,
+    );
+    #[cfg(not(feature = "stderr"))]
     println!(
         "\n{:<parser$} | {:<bar$} | {}",
         "parser",
@@ -500,7 +510,9 @@ fn show_histogram(title: &str, map: &HashMap<String, usize>) {
         parser = max_parser_len,
         bar = bar_length,
     );
-    println!(
+
+    #[cfg(feature = "stderr")]
+    eprintln!(
         "{:<parser$} | {:<bar$} | {}",
         "-".repeat(max_parser_len),
         "-".repeat(bar_length),
@@ -508,9 +520,29 @@ fn show_histogram(title: &str, map: &HashMap<String, usize>) {
         parser = max_parser_len,
         bar = bar_length,
     );
+    #[cfg(not(feature = "stderr"))]
+    println!(
+        "\n{:<parser$} | {:<bar$} | {}",
+        "parser",
+        title,
+        "count",
+        parser = max_parser_len,
+        bar = bar_length,
+    );
+
     for (p, c) in &result {
         let bar = *c * bar_length / max_count;
         if bar > 0 {
+            #[cfg(feature = "stderr")]
+            eprintln!(
+                "{:<parser$} | {}{} | {}",
+                p,
+                ".".repeat(bar),
+                " ".repeat(bar_length - bar),
+                c,
+                parser = max_parser_len,
+            );
+            #[cfg(not(feature = "stderr"))]
             println!(
                 "{:<parser$} | {}{} | {}",
                 p,
@@ -521,7 +553,11 @@ fn show_histogram(title: &str, map: &HashMap<String, usize>) {
             );
         }
     }
-    println!("");
+    if cfg!(feature = "stderr") {
+        eprintln!("");
+    } else {
+        println!("")
+    }
 }
 
 /// Function to display forward trace.
