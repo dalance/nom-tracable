@@ -585,7 +585,8 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
             "parser",
             input.header(),
             parser_width = info.parser_width - control_witdh,
-        );
+        )
+        .unwrap();
     }
 
     if info.forward {
@@ -627,7 +628,8 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
             ),
             input.format(),
             parser_width = info.parser_width,
-        );
+        )
+        .unwrap();
     }
 
     crate::TRACABLE_STORAGE.with(|storage| {
@@ -710,7 +712,8 @@ pub fn backward_trace<T: Tracable, U, V>(
                     ),
                     s.format(),
                     parser_width = info.parser_width,
-                );
+                )
+                .unwrap();
 
                 let s = if info.folded(name) {
                     let info = s
@@ -739,7 +742,8 @@ pub fn backward_trace<T: Tracable, U, V>(
                         reset
                     ),
                     parser_width = info.parser_width,
-                );
+                )
+                .unwrap();
                 Err(x)
             }
         }
@@ -778,6 +782,7 @@ pub fn custom_trace<T: Tracable>(input: &T, name: &str, message: &str, color: &s
             format!("{}{}   {}{}", color, " ".repeat(depth), name, reset),
             message,
             parser_width = info.parser_width,
-        );
+        )
+        .unwrap();
     }
 }
