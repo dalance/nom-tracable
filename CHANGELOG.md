@@ -1,6 +1,8 @@
 # Change Log
 
-## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.9.0...Unreleased) - ReleaseDate
+## [Unreleased](https://github.com/dalance/nom-tracable/compare/v0.9.1...Unreleased) - ReleaseDate
+
+## [v0.9.1](https://github.com/dalance/nom-tracable/compare/v0.9.0...v0.9.1) - 2023-12-27
 
 * [Added] Allow printing to stderr instead of stdout [#19](https://github.com/dalance/nom-tracable/pull/19)
 
