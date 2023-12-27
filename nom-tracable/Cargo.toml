@@ -21,6 +21,7 @@ pre-release-replacements = [
 [features]
 default = []
 trace   = []
+stderr  = []
 
 [dependencies]
 nom                 = "7"

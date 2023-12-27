@@ -34,7 +34,7 @@
 use nom::IResult;
 /// Custom attribute to enable trace
 pub use nom_tracable_macros::tracable_parser;
-use std::collections::HashMap;
+use std::{collections::HashMap, io::Write};
 
 /// Trait to indicate the type can display as fragment.
 pub trait FragmentDisplay {
@@ -492,36 +492,50 @@ fn show_histogram(title: &str, map: &HashMap<String, usize>) {
 
     let bar_length = 50;
 
-    println!(
+    let mut lock = if cfg!(feature = "stderr") {
+        Box::new(std::io::stderr().lock()) as Box<dyn Write>
+    } else {
+        Box::new(std::io::stdout().lock()) as Box<dyn Write>
+    };
+
+    writeln!(
+        lock,
         "\n{:<parser$} | {:<bar$} | {}",
         "parser",
         title,
         "count",
         parser = max_parser_len,
         bar = bar_length,
-    );
-    println!(
+    )
+    .unwrap();
+
+    writeln!(
+        lock,
         "{:<parser$} | {:<bar$} | {}",
         "-".repeat(max_parser_len),
         "-".repeat(bar_length),
         "-".repeat(max_count_len),
         parser = max_parser_len,
         bar = bar_length,
-    );
+    )
+    .unwrap();
+
     for (p, c) in &result {
         let bar = *c * bar_length / max_count;
         if bar > 0 {
-            println!(
+            writeln!(
+                lock,
                 "{:<parser$} | {}{} | {}",
                 p,
                 ".".repeat(bar),
                 " ".repeat(bar_length - bar),
                 c,
                 parser = max_parser_len,
-            );
+            )
+            .unwrap();
         }
     }
-    println!("");
+    writeln!(lock, "").unwrap()
 }
 
 /// Function to display forward trace.
@@ -530,6 +544,12 @@ fn show_histogram(title: &str, map: &HashMap<String, usize>) {
 pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
     let info = input.get_tracable_info();
     let depth = info.depth;
+
+    let mut lock = if cfg!(feature = "stderr") {
+        Box::new(std::io::stderr().lock()) as Box<dyn Write>
+    } else {
+        Box::new(std::io::stdout().lock()) as Box<dyn Write>
+    };
 
     if depth == 0 {
         crate::TRACABLE_STORAGE.with(|storage| {
@@ -558,13 +578,15 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
 
         let control_witdh = if info.color { 11 } else { 0 };
 
-        println!(
+        writeln!(
+            lock,
             "\n{} : {:<parser_width$} : {}",
             forward_backword,
             "parser",
             input.header(),
             parser_width = info.parser_width - control_witdh,
-        );
+        )
+        .unwrap();
     }
 
     if info.forward {
@@ -592,7 +614,8 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
         let reset = if info.color { "\u{001b}[0m" } else { "" };
         let folded = if info.folded(name) { "+" } else { " " };
 
-        println!(
+        writeln!(
+            lock,
             "{} : {:<parser_width$} : {}",
             forward_backword,
             format!(
@@ -605,7 +628,8 @@ pub fn forward_trace<T: Tracable>(input: T, name: &str) -> (TracableInfo, T) {
             ),
             input.format(),
             parser_width = info.parser_width,
-        );
+        )
+        .unwrap();
     }
 
     crate::TRACABLE_STORAGE.with(|storage| {
@@ -666,9 +690,16 @@ pub fn backward_trace<T: Tracable, U, V>(
         let reset = if info.color { "\u{001b}[0m" } else { "" };
         let folded = if info.folded(name) { "+" } else { " " };
 
+        let mut lock = if cfg!(feature = "stderr") {
+            Box::new(std::io::stderr().lock()) as Box<dyn Write>
+        } else {
+            Box::new(std::io::stdout().lock()) as Box<dyn Write>
+        };
+
         match input {
             Ok((s, x)) => {
-                println!(
+                writeln!(
+                    lock,
                     "{} : {:<parser_width$} : {}",
                     forward_backword,
                     format!(
@@ -681,7 +712,8 @@ pub fn backward_trace<T: Tracable, U, V>(
                     ),
                     s.format(),
                     parser_width = info.parser_width,
-                );
+                )
+                .unwrap();
 
                 let s = if info.folded(name) {
                     let info = s
@@ -697,7 +729,8 @@ pub fn backward_trace<T: Tracable, U, V>(
                 Ok((s.dec_depth(), x))
             }
             Err(x) => {
-                println!(
+                writeln!(
+                    lock,
                     "{} : {:<parser_width$}",
                     forward_backword,
                     format!(
@@ -709,7 +742,8 @@ pub fn backward_trace<T: Tracable, U, V>(
                         reset
                     ),
                     parser_width = info.parser_width,
-                );
+                )
+                .unwrap();
                 Err(x)
             }
         }
@@ -735,12 +769,20 @@ pub fn custom_trace<T: Tracable>(input: &T, name: &str, message: &str, color: &s
         let color = if info.color { color } else { "" };
         let reset = if info.color { "\u{001b}[0m" } else { "" };
 
-        println!(
+        let mut lock = if cfg!(feature = "stderr") {
+            Box::new(std::io::stderr().lock()) as Box<dyn Write>
+        } else {
+            Box::new(std::io::stdout().lock()) as Box<dyn Write>
+        };
+
+        writeln!(
+            lock,
             "{} : {:<parser_width$} : {}",
             forward_backword,
             format!("{}{}   {}{}", color, " ".repeat(depth), name, reset),
             message,
             parser_width = info.parser_width,
-        );
+        )
+        .unwrap();
     }
 }
