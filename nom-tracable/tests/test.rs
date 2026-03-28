@@ -1,6 +1,6 @@
 use nom::branch::*;
 use nom::character::complete::*;
-use nom::IResult;
+use nom::{IResult, Parser};
 use nom_locate::LocatedSpan;
 use nom_tracable::{cumulative_histogram, histogram, tracable_parser, TracableInfo};
 
@@ -8,7 +8,7 @@ type Span<'a> = LocatedSpan<&'a str, TracableInfo>;
 
 #[tracable_parser]
 pub fn expr(s: Span) -> IResult<Span, String> {
-    alt((expr_plus, expr_minus, term))(s)
+    alt((expr_plus, expr_minus, term)).parse(s)
 }
 
 #[tracable_parser]
