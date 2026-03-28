@@ -4,7 +4,7 @@
 //!
 //! The following example show a quick example.
 //!
-//! ```
+//! ```no_run
 //! use nom::character::complete::*;
 //! use nom::IResult;
 //! use nom_locate::LocatedSpan;
@@ -54,7 +54,7 @@ impl FragmentDisplay for &str {
     fn display(&self, width: usize) -> String {
         self.lines()
             .next()
-            .unwrap_or_else(|| "")
+            .unwrap_or("")
             .chars()
             .take(width)
             .collect()
@@ -354,7 +354,7 @@ impl TracableStorage {
 
     fn inc_cumulative(&mut self) {
         for val in self.cumulative_working.values_mut() {
-            *val = *val + 1;
+            *val += 1;
         }
     }
 
@@ -391,7 +391,7 @@ thread_local!(
 /// Therefore `histogram` should be called before next parser call.
 /// The information is thread independent because it is stored at thread local storage.
 ///
-/// ```
+/// ```no_run
 /// # use nom::character::complete::*;
 /// # use nom::IResult;
 /// # use nom_locate::LocatedSpan;
@@ -437,7 +437,7 @@ fn histogram_internal() {}
 /// Therefore `cumulative_histogram` should be called before next parser call.
 /// The information is thread independent because it is stored at thread local storage.
 ///
-/// ```
+/// ```no_run
 /// # use nom::character::complete::*;
 /// # use nom::IResult;
 /// # use nom_locate::LocatedSpan;
@@ -500,10 +500,9 @@ fn show_histogram(title: &str, map: &HashMap<String, usize>) {
 
     writeln!(
         lock,
-        "\n{:<parser$} | {:<bar$} | {}",
+        "\n{:<parser$} | {:<bar$} | count",
         "parser",
         title,
-        "count",
         parser = max_parser_len,
         bar = bar_length,
     )
@@ -535,7 +534,7 @@ fn show_histogram(title: &str, map: &HashMap<String, usize>) {
             .unwrap();
         }
     }
-    writeln!(lock, "").unwrap()
+    writeln!(lock).unwrap()
 }
 
 /// Function to display forward trace.

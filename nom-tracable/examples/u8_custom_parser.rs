@@ -1,6 +1,6 @@
 use nom::branch::*;
 use nom::character::complete::*;
-use nom::{IResult, InputIter, Needed, Slice};
+use nom::{IResult, Input, Needed, Parser};
 use nom_locate::LocatedSpan;
 use nom_tracable::{cumulative_histogram, histogram, tracable_parser, TracableInfo};
 #[cfg(feature = "trace")]
@@ -38,7 +38,7 @@ impl<'a> Tracable for Span<'a> {
         let fragment: String = String::from_utf8_lossy(self.0.fragment())
             .lines()
             .next()
-            .unwrap_or_else(|| "")
+            .unwrap_or("")
             .chars()
             .take(info.fragment_width)
             .collect();
@@ -49,17 +49,21 @@ impl<'a> Tracable for Span<'a> {
         self.0.header()
     }
 }
-impl<'a> InputIter for Span<'a> {
+impl<'a> Input for Span<'a> {
     type Item = u8;
-    type Iter = std::iter::Enumerate<Self::IterElem>;
-    type IterElem = std::iter::Copied<std::slice::Iter<'a, Self::Item>>;
+    type Iter = std::iter::Copied<std::slice::Iter<'a, Self::Item>>;
+    type IterIndices = std::iter::Enumerate<Self::Iter>;
     #[inline]
-    fn iter_indices(&self) -> Self::Iter {
-        self.0.iter_indices()
+    fn input_len(&self) -> usize {
+        self.0.len()
     }
     #[inline]
-    fn iter_elements(&self) -> Self::IterElem {
+    fn iter_elements(&self) -> Self::Iter {
         self.0.iter_elements()
+    }
+    #[inline]
+    fn iter_indices(&self) -> Self::IterIndices {
+        self.0.iter_indices()
     }
     #[inline]
     fn position<P>(&self, predicate: P) -> Option<usize>
@@ -72,17 +76,25 @@ impl<'a> InputIter for Span<'a> {
     fn slice_index(&self, count: usize) -> Result<usize, Needed> {
         self.0.slice_index(count)
     }
-}
-impl<'a> Slice<std::ops::RangeFrom<usize>> for Span<'a> {
-    fn slice(&self, range: std::ops::RangeFrom<usize>) -> Self {
-        Span(self.0.slice(range))
+    #[inline]
+    fn take(&self, index: usize) -> Self {
+        Self(self.0.take(index))
+    }
+    #[inline]
+    fn take_from(&self, index: usize) -> Self {
+        Self(self.0.take_from(index))
+    }
+    #[inline]
+    fn take_split(&self, index: usize) -> (Self, Self) {
+        let (a, b) = self.0.take_split(index);
+        (Self(a), Self(b))
     }
 }
 
 // Apply tracable_parser by custom attribute
 #[tracable_parser]
 pub fn expr(s: Span) -> IResult<Span, String> {
-    alt((expr_plus, expr_minus, term))(s)
+    alt((expr_plus, expr_minus, term)).parse(s)
 }
 
 #[tracable_parser]
