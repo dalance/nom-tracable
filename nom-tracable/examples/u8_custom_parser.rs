@@ -38,7 +38,7 @@ impl<'a> Tracable for Span<'a> {
         let fragment: String = String::from_utf8_lossy(self.0.fragment())
             .lines()
             .next()
-            .unwrap_or_else(|| "")
+            .unwrap_or("")
             .chars()
             .take(info.fragment_width)
             .collect();

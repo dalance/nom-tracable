@@ -14,8 +14,8 @@ pub fn tracable_parser(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn impl_tracable_parser(_attr: &AttributeArgs, item: &ItemFn) -> TokenStream {
-    let default = impl_tracable_parser_default(&item);
-    let trace = impl_tracable_parser_trace(&item);
+    let default = impl_tracable_parser_default(item);
+    let trace = impl_tracable_parser_trace(item);
 
     let mut item = item.clone();
 
